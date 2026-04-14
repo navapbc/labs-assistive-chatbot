@@ -2,14 +2,15 @@ import pytest
 
 from src import chat_engine
 from src.batch_process import _process_question, batch_process
-from src.chat_engine import ImagineLA_MessageAttributes, OnMessageResult
+from src.chat_engine import OnMessageResult
+from src.generate import MessageAttributes
 from src.db.models.document import Subsection
 from tests.src.db.models.factories import ChunkFactory
 
 
 @pytest.fixture
 def engine():
-    return chat_engine.create_engine("ca-edd-web")
+    return chat_engine.create_engine("example")
 
 
 @pytest.fixture
@@ -30,7 +31,7 @@ def invalid_csv(tmp_path):
 
 @pytest.mark.asyncio
 async def test_batch_process_invalid(invalid_csv, engine):
-    engine = chat_engine.create_engine("ca-edd-web")
+    engine = chat_engine.create_engine("example")
     with pytest.raises(ValueError, match="CSV file must contain a 'question' column."):
         await batch_process(invalid_csv, engine)
 
@@ -59,13 +60,10 @@ def test_process_question(monkeypatch, engine):
     mock_result = OnMessageResult(
         response="Answer to question.(citation-1)",
         subsections=[Subsection("citation-1", chunk, 0, subsection_text)],
-        attributes=ImagineLA_MessageAttributes(
+        attributes=MessageAttributes(
             needs_context=True,
             users_language="en",
             translated_message="",
-            benefit_program="CalFresh",
-            canned_response="",
-            alert_message="Some alert message.",
         ),
         chunks_with_scores=[],
         system_prompt="",
@@ -81,7 +79,4 @@ def test_process_question(monkeypatch, engine):
         "attrib__needs_context": True,
         "attrib__users_language": "en",
         "attrib__translated_message": "",
-        "attrib__benefit_program": "CalFresh",
-        "attrib__alert_message": "Some alert message.",
-        "attrib__canned_response": "",
     }
