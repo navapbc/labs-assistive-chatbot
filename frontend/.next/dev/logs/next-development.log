@@ -1,0 +1,7 @@
+[00:00:07.363] Server  LOG     ✓ Ready in 5.4s
+[00:00:43.675] Server  LOG     ○ Compiling / ...
+[00:11:07.344] Browser ERROR   Login failed: {}
+[00:23:49.607] Server  LOG     ○ Compiling /chat ...
+[00:32:11.367] Browser ERROR   Login failed: {}
+[00:36:06.329] Browser ERROR   Login failed: {}
+[00:36:25.301] Browser ERROR   Login failed: {}
