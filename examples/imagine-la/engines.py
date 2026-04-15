@@ -21,6 +21,8 @@ from src.generate import (
     analyze_message,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class CaEddWebEngine(BaseEngine):
     retrieval_k: int = 50

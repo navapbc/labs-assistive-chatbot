@@ -132,6 +132,8 @@ def __get_or_create_chat_session(
         user_session=user_session,
         is_new=session_created,
         chat_engine_settings=ChatEngineSettings(user_session.chat_engine_id),
+        # TODO(CALI-51): Add an explicit allowed_chat_engines config setting
+        # instead of auto-allowing all registered engines.
         allowed_engines=chat_engine.available_engines(),
     )
 
