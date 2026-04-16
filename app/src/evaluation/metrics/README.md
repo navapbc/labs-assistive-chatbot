@@ -14,19 +14,20 @@ The metrics module allows you to:
 
 ### Setup
 
-Before running evaluations, you'll need the questions CSV file:
-1. Download the questions file from [this Google Sheet](https://docs.google.com/spreadsheets/d/1KBFMyRUSohqA94ic6yAv3Ne22GwEBJHHYHM49rEKFsc/edit?usp=sharing)
-2. Save it as `question_answer_pairs.csv` in `app/src/evaluation/metrics/data/`
+Before running evaluations, you'll need a questions CSV file. Either generate one using the [QA generation module](../qa_generation/README.md), or provide your own.
+
+Save the file as `question_answer_pairs.csv` in `app/src/evaluation/metrics/data/`.
 
 #### Input CSV Format
 
 The questions CSV file should have the following columns:
-- question: The question text
-- answer: Expected answer text
-- document_name: Name of source document
-- dataset: Dataset identifier (e.g., "Imagine LA")
-- chunk_id: ID of chunk containing answer
-- content_hash: Hash of chunk content for verification
+
+- `question`: The question text
+- `answer`: Expected answer text
+- `document_name`: Name of source document
+- `dataset`: Dataset identifier (matches a dataset ID registered under `app/src/ingestion/`)
+- `chunk_id`: ID of chunk containing answer
+- `content_hash`: Hash of chunk content for verification
 
 ### Command Line Interface
 
@@ -37,24 +38,23 @@ The `src.metrics.cli` module provides a CLI for running evaluations:
 make run-evaluation
 
 # Evaluate a single dataset
-make run-evaluation dataset="imagine_la"
+make run-evaluation dataset="<your_dataset_id>"
 
 # Evaluate multiple datasets with specific k values
-make run-evaluation dataset="imagine_la la_policy" k="5 10 25"
+make run-evaluation dataset="<dataset_a> <dataset_b>" k="5 10 25"
 
 # Evaluate all datasets with sampling
 make run-evaluation sampling=0.1
 ```
 
 Arguments:
-- `dataset`: Optional. One or more datasets to evaluate (e.g., "imagine_la la_policy"). If not specified, evaluates all available datasets. Currently supports:
-  - `imagine_la`: Imagine LA dataset
-  - `la_policy`: LA County Policy dataset
-- `k`: One or more k values to evaluate (default: "5 10 25")
-- `questions_file`: Path to questions CSV file (default: src/evaluation/metrics/data/question_answer_pairs.csv)
-- `min_score`: Minimum similarity score for retrieval (default: -1.0)
-- `sampling`: Fraction of questions to sample (e.g., 0.1) for each specified dataset (default: 1.0)
-- `random_seed`: Random seed for reproducible sampling (only used if sampling is specified)
+
+- `dataset`: Optional. One or more dataset IDs to evaluate, space-separated. If not specified, evaluates all datasets registered under `app/src/ingestion/`.
+- `k`: One or more k values to evaluate (default: `"5 10 25"`)
+- `questions_file`: Path to questions CSV file (default: `src/evaluation/metrics/data/question_answer_pairs.csv`)
+- `min_score`: Minimum similarity score for retrieval (default: `-1.0`)
+- `sampling`: Fraction of questions to sample (e.g., `0.1`) for each specified dataset (default: `1.0`)
+- `random_seed`: Random seed for reproducible sampling (only used if `sampling` is specified)
 
 ### Log Storage
 
@@ -73,7 +73,7 @@ Each evaluation run creates four files in the logs directory:
   "timestamp": "2024-02-15T09:32:47.123456",
   "evaluation_config": {
     "k_value": 5,
-    "dataset_filter": ["imagine_la"],
+    "dataset_filter": ["<your_dataset_id>"],
     "num_samples": 100
   },
   "software_info": {
@@ -91,7 +91,7 @@ Each evaluation run creates four files in the logs directory:
   "expected_answer": "...",
   "expected_chunk": {
     "name": "document.pdf",
-    "source": "imagine_la",
+    "source": "<your_dataset_id>",
     "chunk_id": "123",
     "content_hash": "abc..."
   },
@@ -159,7 +159,7 @@ The CSV contains the following columns:
     }
   },
   "dataset_metrics": {
-    "Imagine LA": {                           // Note: Actual dataset name from CSV
+    "<Your Dataset Name>": {                  // Actual dataset name from CSV
       "recall_at_k": 0.90,                    // Dataset-specific recall rate
       "sample_size": 100,                     // Questions from this dataset
       "avg_score_incorrect": 0.45             // Mean score of incorrect retrievals
