@@ -1,152 +1,155 @@
 # Managing data
 
-## Data Ingestion
+## Data ingestion overview
 
-Chat engines (defined in [app/src/chat_engine.py](https://github.com/navapbc/labs-decision-support-tool/blob/main/app/src/chat_engine.py)) are downstream consumers of data sources. To add a new engine, a class must be created with the following attributes: `engine_id`, `name`, `datasets` (which must match the name of the ingestion dataset's script, see below), and a `formatting_config` which determines how the chat engine's response is formatted.
-The `engine_id` determines the endpoint of the chatbot, while the `datasets` list points to the data sources to be consumed by the engine.
+Chat engines (defined in [app/src/chat_engine.py](../app/src/chat_engine.py)) are downstream consumers of data sources. To add a new engine, create a class with the following attributes:
+
+- `engine_id` — determines the endpoint the chatbot will serve this engine from
+- `name` — human-readable name
+- `datasets` — list of dataset IDs the engine will draw from (each must match the name of an ingestion dataset's script, see below)
+- `formatting_config` — determines how the chat engine's response is formatted
 
 ## Loading documents
 
-The application supports using data from various sources including web scraping, JSON files, and PDFs. We have automated scripts for scraping and ingesting data from several sources.
+The application supports ingesting data from multiple source types, including web scraping (Scrapy/Playwright), JSON inputs, and PDFs. Each dataset is defined by an ingestion script under `app/src/ingestion/` and is addressed by a `dataset_id`.
 
-The `./refresh-ingestion.sh` script automates most of the scraping and ingestion process for all data sources. This is the recommended approach for refreshing data. The following subsections first describe how to use this script, then detail each step performed by the script in case you want to run them individually.
+The `./refresh-ingestion.sh` script orchestrates scraping and ingestion for any registered dataset. The sections below first describe how to use this script, then detail each underlying step in case you want to run them individually.
+
+### Configuring a new dataset
+
+To add a new data source:
+
+1. Add an ingestion script under `app/src/ingestion/<your_dataset_id>/` following the pattern used by existing datasets in that directory.
+2. Register the dataset ID so it can be invoked via `make scrapy-runner` and `make ingest-runner`.
+3. Reference the dataset from a chat engine's `datasets` list.
+
+If your data source requires credentials (API tokens, space IDs, etc.), add those as environment variables in your local `.env` and document them alongside your dataset script. Do not hardcode secrets.
 
 ### Refreshing all data sources
 
-Before refreshing, create a backup of the database -- see the [Backing up DB contents](#backing-up-db-contents) section below.
+Before refreshing, create a backup of the database — see [Backing up DB contents](#backing-up-db-contents) below.
 
-To refresh all data sources at once, use the refresh-ingestion.sh script from within `/app`:
+From within `/app`, run:
 
 ```bash
-export CONTENT_HUB_SPACE_ID="space_id_here"
-export CONTENT_HUB_ACCESS_TOKEN="access_token_here"
 ./refresh-ingestion.sh all
 ```
 
-Note that for the `imagine_la` dataset, you'll need to set the `CONTENT_HUB_ACCESS_TOKEN` and `CONTENT_HUB_SPACE_ID` environment variables in your .env file in order for the data ingestion to run properly in Docker.
+The `refresh-ingestion.sh` script only modifies the local database. To update the database in the deployed environments, the script generates two helper scripts in the top-level directory: `refresh-dev-*.sh` and `refresh-prod-*.sh`. Review these before running — they start ingestion of each dataset in parallel.
 
-The `./refresh-ingestion.sh` script will scrape and ingest data from all supported sources except for 'ssa' (which requires manual scraping). The script only modifies the local database. To update the database in the respective deployment environments, the script generates 2 other scripts in the top-level directory: `refresh-dev-*.sh` and `refresh-prod-*.sh`, which should be reviewed before running. These scripts will start ingestion of each dataset in parallel.
+About 10 minutes after running `refresh-dev-*.sh`, you can check status and wait for completion:
 
-About 10 minutes after running `refresh-dev-*.sh`, you can check the ingestion status and wait for them to complete:
 ```bash
 cd app
 DEPLOY_ENV=dev ./refresh-ingestion.sh wait_until_done
 ```
 
-### Refreshing specific data sources
-
-To refresh a specific data source, specify the dataset ID:
+### Refreshing a specific data source
 
 ```bash
-./refresh-ingestion.sh ca_ftb
+./refresh-ingestion.sh <your_dataset_id>
 ```
 
-For the imagine_la dataset:
+If the dataset requires credentials, export them first (or set them in `.env`):
 
 ```bash
-CONTENT_HUB_SPACE_ID="space_id_here" CONTENT_HUB_ACCESS_TOKEN="access_token_here" ./refresh-ingestion.sh imagine_la
+export MY_DATASET_API_TOKEN="..."
+./refresh-ingestion.sh <your_dataset_id>
 ```
 
-Available datasets include: imagine_la, ca_ftb, ca_public_charge, ca_wic, covered_ca, irs, edd, la_policy, and ssa.
+### Manual process: individual steps
 
-### Manual Process: Individual Steps
-
-The following sections describe each step performed by the refresh-ingestion.sh script in case you want to run them individually.
+The following sections describe each step performed by `refresh-ingestion.sh` in case you want to run them independently.
 
 ### Web scraping
 
-The refresh-ingestion.sh script handles both scraping and ingestion. For manual scraping:
+For manual scraping of a Scrapy-based dataset:
 
 ```bash
-make scrapy-runner args="dataset_id --debug"
+make scrapy-runner args="<your_dataset_id> --debug"
 ```
 
-For the imagine_la dataset:
-
-```bash
-make scrape-imagine-la CONTENT_HUB_SPACE_ID="space_id_here" CONTENT_HUB_ACCESS_TOKEN="access_token_here"
-```
-
-For la_policy, which requires dynamic content scraping:
-
-```bash
-make scrape-la-county-policy
-make scrapy-runner args="la_policy --debug"
-```
+For datasets that require dynamic-content scraping (e.g., via Playwright), add a dedicated make target in the `Makefile` that runs the appropriate scraper before invoking `scrapy-runner`.
 
 ### Loading documents locally
 
-For manual ingestion, you can use the make commands directly:
+For manual ingestion, use `make ingest-runner` with the dataset ID and the path to your scraped JSON:
 
 ```bash
-make ingest-imagine-la DATASET_ID="Benefits Information Hub" BENEFIT_PROGRAM=mixed BENEFIT_REGION=California FILEPATH=src/ingestion/imagine_la/pages
+make ingest-runner args="<your_dataset_id> --json_input=src/ingestion/<your_dataset_id>/scrapings.json"
 ```
+
+For datasets that ingest from a directory of files rather than JSON, define a dedicated make target (e.g., `ingest-<your_dataset_id>`) that passes the required parameters:
 
 ```bash
-make ingest-runner args="edd --json_input=src/ingestion/edd_scrapings.json"
+make ingest-<your_dataset_id> DATASET_ID="My Dataset" FILEPATH=src/ingestion/<your_dataset_id>/pages
 ```
 
-Note that the DATASET_ID will be used in the chatbot web UI to prefix each citation, so use a user-friendly identifier like "CA EDD".
+Notes on parameters:
 
-- The same `DATASET_ID` identifier can be used for multiple documents to represent that they belong in the same dataset.
-- Example `BENEFIT_PROGRAM` values include `housing`, `utilities`, `food`, `medical`, `employment`, `SNAP`, `Medicaid`, etc.
-- `BENEFIT_REGION` can correspond to a town, city, state, country, or any geographic area.
+- `DATASET_ID` is used in the chat UI to prefix each citation — use a user-friendly identifier (e.g., "Product Docs" or "HR Policies").
+- The same `DATASET_ID` can be used for multiple documents to indicate they belong to the same dataset.
+- Any additional metadata fields your ingestion script accepts (categories, regions, tags, etc.) should be documented in the dataset's own README.
 
-The Docker container mounts the `/app` folder, so FILEPATH should be relative to `/app`. `/app/documents` is ignored by git, so is a good place for files you want to load but not commit.
+The Docker container mounts the `/app` folder, so `FILEPATH` should be relative to `/app`. `/app/documents` is ignored by git — a good place for files you want to load but not commit.
 
 ### Loading documents in a deployed environment
 
-The refresh-ingestion.sh script generates deployment scripts for both dev and prod environments. After running the script, you'll find refresh-dev-YYYY-MM-DD.sh and refresh-prod-YYYY-MM-DD.sh in the top-level directory.
+The `refresh-ingestion.sh` script generates deployment scripts for both dev and prod environments (`refresh-dev-YYYY-MM-DD.sh` and `refresh-prod-YYYY-MM-DD.sh` in the top-level directory).
 
-For manual deployment, the deployed application includes an S3 bucket, following the format `s3://decision-support-tool-app-<env>`, e.g., `s3://decision-support-tool-app-dev`.
-
-After authenticating with AWS, from the root of this repo run:
+For manual deployment, the deployed application includes an S3 bucket following the pattern `s3://<app-name>-<env>` (e.g., `s3://my-chatbot-dev`). After authenticating with AWS, from the root of the repo run:
 
 ```bash
-aws s3 cp path/to/scrapings.json s3://decision-support-tool-app-dev/
-./bin/run-command app <ENVIRONMENT> '["ingest-runner", "dataset_id", "--json_input", "s3://decision-support-tool-app-dev/scrapings.json"]'
+aws s3 cp path/to/scrapings.json s3://<app-name>-<ENVIRONMENT>/
+./bin/run-command app <ENVIRONMENT> '["ingest-runner", "<your_dataset_id>", "--json_input", "s3://<app-name>-<ENVIRONMENT>/scrapings.json"]'
 ```
-
-Replace `<ENVIRONMENT>` with your environment, e.g., `dev`.
 
 #### Resuming ingestion for large datasets
 
-For large datasets like edd and la_policy, use the `--resume` flag to continue ingestion from where it last stopped:
+For large datasets, use the `--resume` flag to continue ingestion from where it last stopped:
 
 ```bash
-./bin/run-command app <ENVIRONMENT> '["ingest-runner", "edd", "--json_input", "s3://decision-support-tool-app-dev/edd/edd_scrapings.json", "--resume"]'
+./bin/run-command app <ENVIRONMENT> '["ingest-runner", "<your_dataset_id>", "--json_input", "s3://<app-name>-<ENVIRONMENT>/scrapings.json", "--resume"]'
 ```
 
-This will commit the DB transaction for each Document, rather than committing after all Document records are added.
+This commits the DB transaction per `Document` instead of committing after all records are added.
 
-### To Skip Access to the DB
+### Skipping DB access
 
-For dry-runs or exporting of markdown files, avoid reading and writing to the DB during ingestion by adding the `--skip_db` argument:
+For dry runs or for exporting markdown files, skip reading and writing to the DB during ingestion with `--skip_db`:
 
 ```bash
-make ingest-runner args="dataset_id --json_input=path/to/scrapings.json --skip_db"
+make ingest-runner args="<your_dataset_id> --json_input=path/to/scrapings.json --skip_db"
 ```
 
-Or set the environment variable before running refresh-ingestion.sh:
+Or set the environment variable before running `refresh-ingestion.sh`:
 
 ```bash
 export SKIP_LOCAL_EMBEDDING=true
-./refresh-ingestion.sh dataset_id
+./refresh-ingestion.sh <your_dataset_id>
 ```
 
 ## Backing up DB contents
 
-Since the DB contents will be replaced upon reingestion, new UUIDs will be generated for reingested chunks and documents, which can make diagnosing problems challenging when logs refer to UUIDs that no longer exist in the DB. Before running `refresh-ingestion.sh`, it behooves us to create a backup of DB contents so we can reference the old UUIDs (after restoring the backup to a local DB).
+When reingesting, new UUIDs are generated for chunks and documents, which can make diagnosing problems harder when logs refer to UUIDs that no longer exist. Before running `refresh-ingestion.sh`, create a backup so you can reference old UUIDs by restoring the backup to a local DB.
 
-To backup DB contents for the `dev` deployment, run `./bin/run-command app dev '["poetry", "run", "pg-dump", "backup"]'` to create a [PostgreSQL dump file](https://www.postgresql.org/docs/current/backup-dump.html) and upload it to the `pg_dumps` folder in S3. For the `prod` environment, replace `dev` with `prod` -- remembering to run `./bin/terraform-init infra/app/service prod` first and then verifying the new dump file is in the S3 `pg_dumps/` folder.
+To back up DB contents for the `dev` deployment:
 
 ```sh
 TARGET_ENV=dev
 ./bin/terraform-init infra/app/service $TARGET_ENV
 ./bin/run-command app $TARGET_ENV '["poetry", "run", "pg-dump", "backup"]'
-aws s3 ls "s3://decision-support-tool-app-$TARGET_ENV/pg_dumps/"
+aws s3 ls "s3://<app-name>-$TARGET_ENV/pg_dumps/"
 ```
+
+For `prod`, replace `dev` with `prod` and re-run `./bin/terraform-init` first. Verify the new dump appears in the S3 `pg_dumps/` folder.
 
 ### Restoring DB contents locally
 
-To restore the DB contents locally, run `make pg-dump args="restore --dumpfile db.dump"`, replacing `db.dump` with the file downloaded from S3. Run `make pg-dump args="--help"` for more options.
+To restore DB contents locally:
+
+```bash
+make pg-dump args="restore --dumpfile db.dump"
+```
+
+Replace `db.dump` with the file downloaded from S3. Run `make pg-dump args="--help"` for more options.
