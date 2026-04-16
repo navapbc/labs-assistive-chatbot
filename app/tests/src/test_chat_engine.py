@@ -1,7 +1,6 @@
 import pytest
 
 from src import chat_engine
-from src.chat_engine import BaseEngine
 from src.engines.example_engine import ExampleEngine
 from src.generate import MessageAttributes
 
