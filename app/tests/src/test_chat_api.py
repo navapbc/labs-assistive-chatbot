@@ -18,7 +18,7 @@ from src.chat_api import (
     router,
     run_query,
 )
-from src.chat_engine import ImagineLA_MessageAttributes, OnMessageResult
+from src.chat_engine import OnMessageResult
 from src.citations import CitationFactory, split_into_subsections
 from src.db.models.conversation import Feedback, Step, Thread, User
 from src.generate import MessageAttributes
@@ -71,7 +71,7 @@ def reset_cl_data_layer():
 async def test_api_engines(async_client, db_session):
     response = await async_client.get("/api/engines?user_id=TestUser")
     assert response.status_code == 200
-    assert response.json() == ["imagine-la"]
+    assert response.json() == ["example"]
 
     # Check persistence to DB
     users = db_session.query(User).all()
@@ -91,7 +91,7 @@ async def test_api_engines(async_client, db_session):
     response_step = next(step for step in steps if step.type == "system_message")
     assert response_step.parent_id == request_step.id
     assert request_step.output == "List chat engines"
-    assert response_step.output == "['imagine-la']"
+    assert response_step.output == "['example']"
 
     assert db_session.query(Feedback).count() == 0
 
@@ -359,6 +359,12 @@ async def test_run_query__1_citation(subsections):
     assert metadata["attributes"]["needs_context"] is True
 
 
+class _AlertMessageAttributes(MessageAttributes):
+    """Test-only subclass to verify alert_message handling in run_query."""
+
+    alert_message: str
+
+
 @pytest.mark.asyncio
 async def test_run_query__2_citations(subsections):
     class MockChatEngine:
@@ -366,12 +372,10 @@ async def test_run_query__2_citations(subsections):
             return OnMessageResult(
                 "Response from LLM (citation-2)(citation-3)",
                 "Some system prompt",
-                ImagineLA_MessageAttributes(
+                _AlertMessageAttributes(
                     needs_context=True,
                     users_language="en",
                     translated_message="",
-                    benefit_program="CalFresh",
-                    canned_response="",
                     alert_message="Some alert message.",
                 ),
                 chunks_with_scores=[],
@@ -415,8 +419,8 @@ def test_get_chat_engine():
         user_session=UserSessionFactory.build(),
         is_new=True,
         user_uuid="some_user_id",
-        chat_engine_settings=ChatEngineSettings("ca-edd-web", retrieval_k=6),
-        allowed_engines=["ca-edd-web"],
+        chat_engine_settings=ChatEngineSettings("example", retrieval_k=6),
+        allowed_engines=["example"],
     )
     engine = get_chat_engine(session)
     assert engine.retrieval_k == 6
@@ -428,7 +432,7 @@ def test_get_chat_engine__unknown():
         is_new=True,
         user_uuid="some_user_id",
         chat_engine_settings=ChatEngineSettings("engine_y"),
-        allowed_engines=["ca-edd-web"],
+        allowed_engines=["example"],
     )
     with pytest.raises(HTTPException, match="Unknown engine: engine_y"):
         get_chat_engine(session)
@@ -439,10 +443,10 @@ def test_get_chat_engine_not_allowed():
         user_session=UserSessionFactory.build(),
         is_new=True,
         user_uuid="some_user_id",
-        chat_engine_settings=ChatEngineSettings("bridges-eligibility-manual"),
-        allowed_engines=["ca-edd-web"],
+        chat_engine_settings=ChatEngineSettings("nonexistent-engine"),
+        allowed_engines=["example"],
     )
-    with pytest.raises(HTTPException, match="Unknown engine: bridges-eligibility-manual"):
+    with pytest.raises(HTTPException, match="Unknown engine: nonexistent-engine"):
         get_chat_engine(session)
 
 
@@ -576,12 +580,10 @@ async def test_query_stream_with_alert(async_client, monkeypatch, db_session):
                 yield "data1"
 
             # Provide an attributes object with alert_message
-            attributes = ImagineLA_MessageAttributes(
+            attributes = _AlertMessageAttributes(
                 needs_context=False,
                 users_language="en",
                 translated_message="",
-                benefit_program="",
-                canned_response="",
                 alert_message="ALERT!",
             )
             return gen(), attributes, []

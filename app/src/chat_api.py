@@ -109,7 +109,7 @@ def __get_or_create_chat_session(
             user_session = UserSession(
                 session_id=session_id or str(uuid.uuid4()),
                 user_id=user_id,
-                chat_engine_id="imagine-la",
+                chat_engine_id=app_config.chat_engine,
                 # Assign a new thread ID for the session
                 # This will be used as Message/Step.thread_id and Thread.id when they're created
                 thread_id=str(uuid.uuid4()),
@@ -132,7 +132,9 @@ def __get_or_create_chat_session(
         user_session=user_session,
         is_new=session_created,
         chat_engine_settings=ChatEngineSettings(user_session.chat_engine_id),
-        allowed_engines=["imagine-la"],
+        # TODO(CALI-51): Add an explicit allowed_chat_engines config setting
+        # instead of auto-allowing all registered engines.
+        allowed_engines=chat_engine.available_engines(),
     )
 
 

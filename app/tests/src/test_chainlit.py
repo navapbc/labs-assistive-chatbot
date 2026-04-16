@@ -10,10 +10,10 @@ from src.generate import MessageAttributes
 def test_url_query_values(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "mock_key")
 
-    url = "https://example.com/chat/?engine=ca-edd-web&llm=gpt-4o&retrieval_k=3&someunknownparam=42"
+    url = "https://example.com/chat/?engine=example&llm=gpt-4o&retrieval_k=3&someunknownparam=42"
     query_values = chainlit.url_query_values(url)
     engine_id = query_values.pop("engine")
-    assert engine_id == "ca-edd-web"
+    assert engine_id == "example"
 
     engine = chat_engine.create_engine(engine_id)
     input_widgets = chainlit._init_chat_settings(engine, query_values)
@@ -74,7 +74,7 @@ def test__extract_raw_chat_history():
     clMessage1.configure_mock(
         content="CA EDD Web Chat Engine started ",
         metadata={
-            "engine": "ca-edd-web",
+            "engine": "example",
             "settings": {
                 "llm": "gpt-4o",
                 "retrieval_k": 50.0,
