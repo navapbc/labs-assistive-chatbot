@@ -27,9 +27,16 @@ root
 └── docker-compose.yml  Config file for docker-compose tool, used for local development
 ```
 
+## Key technologies
+
+The application is built on [Chainlit](https://chainlit.io/), using Postgres with the [pgvector](https://github.com/pgvector/pgvector) extension for vector embeddings.
+
+[SQLAlchemy](https://www.sqlalchemy.org/) is the ORM, with migrations driven by [Alembic](https://alembic.sqlalchemy.org/). [pydantic](https://docs.pydantic.dev/) is used for parsing data (and often serializing it to JSON or plain dictionaries). Where pydantic is not used, plain Python dataclasses are generally preferred.
+
+Dependencies are managed with [poetry](https://python-poetry.org/docs/).
+
 ## Information
 
-* [Technical Overview](./technical-overview.md)
 * [Database Management](./database/database-management.md)
 * [Formatting and Linting](./formatting-and-linting.md)
 * [Writing Tests](./writing-tests.md)
@@ -81,8 +88,8 @@ export DB_HOST=localhost
 ```
 And then running `direnv allow .` in the /app folder. You should see something like:
 ```shell
-➜  labs-decision-support-tool git:(main) ✗ cd app
-direnv: loading ~/workspace/labs-decision-support-tool/app/.envrc
+➜  assistive-chatbot git:(main) ✗ cd app
+direnv: loading ~/workspace/assistive-chatbot/app/.envrc
 direnv: export +API_AUTH_TOKEN +AWS_ACCESS_KEY_ID +AWS_DEFAULT_REGION +AWS_SECRET_ACCESS_KEY +DB_HOST +DB_NAME +DB_PASSWORD +DB_SCHEMA +DB_SSL_MODE +DB_USER +ENVIRONMENT +HIDE_SQL_PARAMETER_LOGS +LOG_ENABLE_AUDIT +LOG_FORMAT +PORT +PYTHONPATH
 ```
 

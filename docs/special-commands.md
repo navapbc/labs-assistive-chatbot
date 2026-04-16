@@ -6,13 +6,13 @@ While the commands aren't case-sensitive, their format is (e.g., dates need to f
 
 ## Batch processing
 
-To have answers generated for multiple questions at once, create a .csv file with a `question` column, for example:
+To have answers generated for multiple questions at once, create a `.csv` file with a `question` column, for example:
 
-```
+```csv
 question
-"What is the base period for SDI?"
-"Where can I find the Spanish version of the claims information?"
-"What types of support does the program offer for individuals recovering from an illness or injury?"
+"What is X?"
+"How do I do Y?"
+"Where can I find the documentation for Z?"
 ```
 
 Then, in the chat interface, submit the message `Batch processing` to the chatbot and upload the .csv file when prompted.

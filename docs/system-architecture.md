@@ -1,6 +1,6 @@
-# System Architecture
+# System architecture
 
-This diagram shows the system architecture. [🔒 Make a copy of this Lucid template for your own application](https://lucid.app/lucidchart/8851888e-1292-4228-8fef-60a61c6b57e7/edit).
+The diagram below shows the deployed AWS architecture for the Assistive Chatbot. It reflects the standard architecture provided by Nava's [infrastructure template](https://github.com/navapbc/template-infra) — see that project for diagram source files you can copy and adapt.
 
 ![System architecture](https://lucid.app/publicSegments/view/e5a36152-200d-4d95-888e-4cdbdab80d1b/image.png)
 

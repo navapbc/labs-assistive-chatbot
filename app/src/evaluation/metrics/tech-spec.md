@@ -73,7 +73,7 @@ question: Text
 answer: Text
 document_name: Text
 document_source: Text
-dataset: Text (e.g., "LA Policy", "CA EDD")
+dataset: Text (dataset identifier, e.g., "<Your Dataset Name>")
 document_id: UUID (foreign key to documents)
 chunk_id: UUID (foreign key to chunks)
 content_hash: Text (for verifying chunk matches)
@@ -207,7 +207,7 @@ logs/
   "evaluation_config": {
     "k_value": X,
     "num_samples": XXX,
-    "dataset_filter": ["LA County Policy", "CA EDD"]
+    "dataset_filter": ["<Dataset A>", "<Dataset B>"]
   },
   "system_info": {
     "package_version": "X.X.X",
@@ -228,11 +228,11 @@ Each line is a JSON object representing one evaluation:
 ```json
 {
   "qa_pair_id": "uuid",
-  "question": "What are the eligibility requirements for CalFresh?",
+  "question": "What are the eligibility requirements for program X?",
   "expected_answer": "...",
   "document_info": {
-    "name": "CalFresh_Policy_2024.pdf",
-    "source": "CA EDD",
+    "name": "program_x_policy_2024.pdf",
+    "source": "<your_dataset_id>",
     "chunk_id": "uuid",
     "content_hash": "sha256:XXXXX"
   },
@@ -265,12 +265,12 @@ Each line is a JSON object representing one evaluation:
     "successful_retrievals": XX
   },
   "dataset_metrics": {
-    "LA County Policy": {
+    "<Dataset A>": {
       "precision_at_k": 0.XX,
       "recall_at_k": 0.XX,
       "sample_size": XX
     },
-    "CA EDD": {
+    "<Dataset B>": {
       "precision_at_k": 0.XX,
       "recall_at_k": 0.XX,
       "sample_size": XX
@@ -279,7 +279,7 @@ Each line is a JSON object representing one evaluation:
   "error_analysis": {
     "failed_retrievals": XX,
     "avg_score_failed": 0.XX,
-    "common_failure_datasets": ["CA EDD"]
+    "common_failure_datasets": ["<Dataset B>"]
   }
 }
 ```

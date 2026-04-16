@@ -1,169 +1,166 @@
-# Google Sheets Integration with PromptFoo for Chatbot Evaluation
+# Promptfoo evaluations via Google Sheets
 
-This document outlines how to use promptfoo with Google Sheets to evaluate our chatbot's responses on various inputs and automatically score them.
+[Promptfoo](https://promptfoo.dev/) is an evaluation framework for LLM outputs. This template integrates Promptfoo with Google Sheets so that test cases and results can be authored, run, and shared from a familiar interface.
 
-## Overview
+You can run evaluations two ways:
 
-[promptfoo](https://promptfoo.dev/) is an evaluation framework for LLM outputs that allows us to:
-- Define test cases for our chatbot
-- Run evaluations against these test cases
-- Score the outputs automatically
-- View and share the results
+- **Locally via the Promptfoo CLI** — fast iteration against a local instance of the chatbot.
+- **Via a GitHub Actions workflow** — one-click runs against a deployed instance, with results written back to the sheet.
 
-By integrating with Google Sheets, we can:
-- Collaborate on test cases in a familiar interface
-- Run evaluations from the command line
-- Write evaluation results back to the same or different sheets
-- Share results easily with the team
+## Test case sheet format
 
-## Setup Instructions
+Create a Google Sheet with at least these three columns:
 
-### 1. Install promptfoo and initialize the project
+| Column        | Description                                | Example                                       |
+| ------------- | ------------------------------------------ | --------------------------------------------- |
+| `capability`  | What you'd like to test                    | `It refuses to answer out-of-scope questions` |
+| `question`    | The input sent to the chatbot              | `What is X?`                                  |
+| `__expected`  | Assertion applied to the chatbot's output  | `contains:Sorry, I can't answer that.`        |
+
+Promptfoo supports [many assertion types](https://www.promptfoo.dev/docs/configuration/expected-outputs/#assertion-types) beyond `contains:`. See also the [Google Sheets format reference](https://www.promptfoo.dev/docs/configuration/parameters/#import-from-csv).
+
+## Option A: Run locally via the Promptfoo CLI
+
+### 1. Install promptfoo
 
 ```bash
-# From the project root
 npm install -g promptfoo
-npm install googleapis  # Peer dependency for Google Sheets integration
-promptfoo init # This will create a promptfooconfig.yaml placeholder in your current directory
+npm install googleapis   # peer dependency for Google Sheets integration
+promptfoo init           # creates a placeholder promptfooconfig.yaml
 ```
 
-### 2. Create a Google Sheet for Test Cases (Publicly Accessible)
+### 2. Make your test sheet readable
 
-1. Create a new Google Sheet
-2. Make it public (Share > Anyone with the link > Viewer)
-3. Structure the sheet with the following columns:
-   - Input variables for your test cases (e.g., `question`, `context`, `capability`)
-   - `__expected` column for assertions/expectations
+For local CLI runs, the simplest path is to make the sheet public:
 
-Example sheet structure:
-| capability | question | __expected |
-|------------|---------|------------|
-| It should have the most recent benefit numerical values | What is the maximum benefit I can get as a single person from SNAP? | contains: 292 |
-| It should know hot foods are not generally purchasable | Can I buy a rotisserie chicken with my SNAP benefits? | contains: NO |
+- Share → Anyone with the link → **Viewer**
 
-### 3. Create a promptfoo Configuration File
+Alternatively, use service-account authentication (see [Writing results back to Google Sheets](#writing-results-back-to-google-sheets)).
 
-Create a file named `promptfooconfig.yaml` in your project directory. See the [promptfoo-config-template.yaml](promptfoo-config-template.yaml) for a template.
+### 3. Configure promptfoo
 
-### 3a. Creating a JavaScript Function for Unique Session IDs
+Use the [promptfooconfig-template.yaml](promptfooconfig-template.yaml) in this directory as a starting point. It's preconfigured to hit the chatbot's `/api/query` endpoint with the following request fields:
 
-Since promptfoo doesn't directly support built-in variables like `{{$uuid}}` or `{{$random}}`, we need to create a JavaScript function to generate unique session IDs:
+- `chat_history` — empty array for new sessions
+- `session_id` — a unique identifier (generated via a JavaScript helper)
+- `new_session` — whether to create a new session
+- `message` — the question from the test case
+- `user_id` — the user ID
 
-1. Create a file named `generateUniqueId.js`, see the [generateUniqueId.js](generateUniqueId.js) file for an example.
+`transformResponse: "json ? json.response_text : ''"` extracts the `response_text` field from the API response.
 
-2. Reference this file in your promptfoo configuration as shown above in the `defaultTest.vars` section.
+#### Unique session IDs
 
-### 4. Start the Chatbot Service
+Promptfoo doesn't have built-in `{{$uuid}}` / `{{$random}}` variables, so generate unique IDs via a small JavaScript helper. See [generateUniqueId.js](generateUniqueId.js) and reference it from `defaultTest.vars` in the config.
 
-Before running the evaluation, make sure the chatbot service is running:
+Key Nunjucks templating tips:
+
+- Variables from test cases are accessed as `{{variableName}}`.
+- For dynamic values, use a JS file referenced as `file://path/to/script.js`.
+- Place shared variables under `defaultTest.vars` to make them available to all tests.
+- JS functions must return an object with an `output` property.
+
+### 4. Start the chatbot
 
 ```bash
 make start
 ```
 
-This will start the chatbot service on `http://localhost:8000`.
+This runs the service on `http://localhost:8000`.
 
-### 5. Running Evaluations
-
-Run the evaluation and output the results:
+### 5. Run the evaluation
 
 ```bash
-# Run evaluation with the default output
+# Run
 promptfoo eval -c promptfooconfig.yaml
 
-# In a separate terminal, view the results in a web UI
+# View results in a web UI (separate terminal)
 promptfoo view
 ```
 
-## Writing Results Back to Google Sheets
+### Writing results back to Google Sheets
 
-### Setting Up Google Authentication
+To write results back to a sheet, set up Google service-account credentials:
 
-To write results back to your Google Sheet, you'll need to set up Google's Default Application Credentials:
+1. In [Google Cloud Console](https://console.cloud.google.com/), create a project (or reuse one) and enable the **Google Sheets API**.
+2. Create a service account under **Credentials → Create Credentials → Service Account** and download the JSON key file.
+3. Set:
 
-1. **Create a service account in Google Cloud Console**:
-   - Go to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select an existing one
-   - Enable the Google Sheets API (sheets.googleapis.com)
-   - Go to "Credentials" → "Create Credentials" → "Service Account"
-   - Download the JSON key file
-
-2. **Set up authentication**:
    ```bash
-   # Set the environment variable for authentication
    export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account-file.json"
    ```
 
-3. **Share your Google Sheet with the service account**:
-   - Open the JSON key file and find the "client_email" field (e.g. `example@navapbc.gserviceaccount.com`)
-   - Share your Google Sheet with this email address, giving it "Editor" access
+4. In the JSON key, find `client_email` and share your Google Sheet with that address as **Editor**.
 
-### Writing Results to the Same Sheet
-
-Once authenticated, you can write evaluation results directly to your Google Sheet by adding an `outputPath` to your configuration:
+Then add an `outputPath` to your config (or pass `-o` on the CLI):
 
 ```yaml
-# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
-description: 'Decision Support Tool Evaluation'
-# ... existing configuration ...
-
-# Input sheet for test cases (replace {sheetId} and {gid} with the actual sheet ID and gid)
+# Input sheet for test cases
 tests: https://docs.google.com/spreadsheets/d/{sheetId}/edit?gid={gid}
 
-# Option 1: Replace the existing tab for each evaluation including the gid (uncomment to use)
+# Option 1: overwrite an existing tab (include gid)
 # outputPath: https://docs.google.com/spreadsheets/d/{sheetId}/edit?gid={gid}
 
-# Option 2: Create a new tab for each evaluation excluding the gid (uncomment to use)
+# Option 2: append a new tab per evaluation (omit gid)
 # outputPath: https://docs.google.com/spreadsheets/d/{sheetId}/edit
 ```
 
-Alternatively, specify the output path directly on the command line:
+Or via CLI:
 
 ```bash
 promptfoo eval -c promptfooconfig.yaml -o https://docs.google.com/spreadsheets/d/{sheetId}/edit
 ```
 
-### Exporting the Most Recent Evaluation
-
-If you've already run an evaluation and want to export those results to a Google Sheet:
+To export a previously-run evaluation:
 
 ```bash
-# Export the most recent evaluation to the Google Sheet (create a new tab)
 promptfoo export latest --output https://docs.google.com/spreadsheets/d/{sheetId}/edit
 ```
 
-You can find the evaluation ID in the output of your evaluation run, after "Evaluation complete. ID:". If you don't have the ID, you can use `latest` to export the most recent evaluation.
+The evaluation ID is printed after each run (`Evaluation complete. ID: ...`). `latest` works as a shortcut.
 
-## Custom Evaluation Setup for Our Chatbot
+## Option B: Run via the GitHub Actions workflow
 
-The configuration shown above is set up to work specifically with our chatbot API endpoint at `/api/query`. The body parameters match our API's expected format:
+The template includes a `promptfoo-googlesheet-evaluation.yml` GitHub Actions workflow that runs evaluations against a deployed instance of the chatbot and writes results back to the sheet — no local setup required.
 
-- `chat_history`: The chat history (empty array for new sessions)
-- `session_id`: A unique identifier for the session (generated by our JavaScript function)
-- `new_session`: Whether to create a new session
-- `message`: The question to ask the chatbot
-- `user_id`: The user ID
+### One-time setup
 
-The `transformResponse: "json ? json.response_text : ''"` field tells promptfoo to extract the `response_text` field from the API response as a string.
+1. Create a Google Cloud service account and download the JSON key (as above).
+2. Add the JSON key as a GitHub Actions secret that the workflow can read (see the workflow file for the expected secret name).
+3. Note the service account's email address. You'll share every test sheet with this address.
 
-## Using Nunjucks Templating with promptfoo
+### Running an evaluation
 
-Promptfoo uses Nunjucks templating for variable substitution in prompts and API requests. Key points to remember:
+1. Create a sheet with the columns described in [Test case sheet format](#test-case-sheet-format).
+2. Share **Editor** access to the sheet with your service account email.
+3. Copy the sheet URL, e.g. `https://docs.google.com/spreadsheets/d/{sheetId}/edit?gid=0#gid=0`.
+4. Go to the **Prompt Evaluation** GitHub Actions workflow for your repo and click **Run workflow**:
 
-1. Variables from test cases are accessed using `{{variableName}}` syntax
-2. For dynamic content like unique IDs, use JavaScript files referenced via `file://path/to/script.js`
-3. Use `defaultTest.vars` to make variables available to all test cases
-4. The JavaScript functions must return an object with an `output` property
+   ![Run workflow button in GitHub Actions](promptfoo-evaluations-run-workflow.png)
+
+5. Paste the sheet URL into both `Google Sheet URL for test case inputs` and `Google Sheet URL for evaluation outputs`.
+   - If there's a non-zero `gid` at the end of the output URL, **that tab will be overwritten**. To write a new tab instead, strip the `gid`: `https://docs.google.com/spreadsheets/d/{sheetId}/edit`.
+   - Leave `Use workflow from` and `Chatbot API endpoint URL` at defaults (see below).
+6. Click **Run workflow**. Refresh the page; you should see your run with a yellow running indicator:
+
+   ![Example list of running workflows](promptfoo-evaluation-running-workflows.png)
+
+7. After roughly 3–5 minutes the run finishes (green check). Results will appear in the sheet.
+
+### Advanced options
+
+- **`Use workflow from`** — selects the branch GitHub checks out to run the workflow YAML. Leave at `main` unless you're iterating on the workflow itself. This does **not** change the chatbot prompt or code being evaluated.
+- **`Chatbot API endpoint URL`** — which deployed instance to evaluate. Defaults to the dev environment. You can point it at a preview environment, e.g. `http://<preview-host>/api/query` (without SSL if the certificate doesn't match the domain).
 
 ## Troubleshooting
 
-- **404 Not Found errors**: Ensure the chatbot service is running with `make start` before running the evaluation
-- **Authentication errors**: If the API requires authentication, add appropriate headers to the config
-- **Session already exists errors**: If you're getting errors about sessions already existing, ensure your `uniqueSessionId` function is generating truly unique IDs
-- **Google Sheets access errors**: Make sure your service account has the proper permissions to the sheet
+- **404 Not Found**: ensure the chatbot is running (`make start` locally, or that the deployed endpoint is reachable).
+- **Auth errors**: if the chatbot API requires authentication, add the appropriate headers in your config.
+- **Session already exists**: ensure your `uniqueSessionId` function returns truly unique IDs.
+- **Google Sheets access errors**: confirm the service account has Editor access to the sheet and that the Sheets API is enabled on the Cloud project.
 
 ## Resources
 
-- [promptfoo Documentation](https://promptfoo.dev/docs/intro)
-- [promptfoo Google Sheets Integration](https://promptfoo.dev/docs/configuration/load-from-googlesheets)
-- [Example Google Sheet Format](https://docs.google.com/spreadsheets/d/1eqFnv1vzkPvS7zG-mYsqNDwOzvSaiIAsKB3zKg9H18c/edit?usp=sharing) 
+- [Promptfoo docs](https://promptfoo.dev/docs/intro)
+- [Promptfoo Google Sheets integration](https://promptfoo.dev/docs/configuration/load-from-googlesheets)
+- [Assertion types](https://www.promptfoo.dev/docs/configuration/expected-outputs/#assertion-types)

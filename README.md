@@ -1,24 +1,59 @@
-# Nava Labs Decision Support Tool
+# Nava Labs Assistive Chatbot
 
-Welcome! You are at the root of the Nava Labs Decision Support Tool pilot repo. This repo contains code for a chatbot that answers questions about public benefit programs. It is powered by generative AI and retrieval-augmented-generation ("RAG") and intended for use by benefit navigators that have prior experience and familiarity with these programs.
+Welcome! This is an open-source template from [Nava Labs](https://github.com/navapbc) for building an AI-powered assistive chatbot. It provides a production-ready starting point for a generative AI chatbot that uses retrieval-augmented generation (RAG) to answer questions grounded in your own documentation.
 
-## Project description
+Use this template to stand up a chatbot that ingests domain-specific content (policy documents, knowledge-base articles, internal documentation, etc.), indexes it for semantic search, and serves answers through a chat UI and a REST API.
 
-The chatbot ingests and parses documentation on policy programs, and then searches across this database of documentation to inform its responses. In March 2025, Nava began a pilot of this chatbot in partnership with [Imagine LA](https://www.imaginela.org/). Users of Imagine LA's [Benefit Navigator](https://www.imaginela.org/benefit-navigator) were provided access to a chatbot with access to documentation about CalWorks, CalFresh, Med-Cal, various tax credits and housing assistance programs, unemployment insurance, state disability insurance, paid family leave, and more.
+## Table of contents
+
+- [How it works](#how-it-works)
+- [Project components](#project-components)
+- [Set up and run the application](#set-up-and-run-the-application)
+  - [Managing the chatbot's data](#managing-the-chatbots-data)
+- [Research and evaluation](#research-and-evaluation)
+- [Deploying the application](#deploying-the-application)
+- [Contributing](#contributing)
+
+## How it works
+
+The chatbot follows a standard RAG pipeline: source content is ingested and indexed into a vector database, then user questions are answered by retrieving relevant chunks and passing them to an LLM as context.
+
+```mermaid
+flowchart LR
+    subgraph Ingestion
+        A[Source documents<br/>web pages, PDFs, etc.] --> B[Scrapy / Playwright /<br/>Beautiful Soup]
+        B --> C[Tree-based chunking<br/>ingester.py]
+        C --> D[Embedding model]
+        D --> E[(pgvector DB)]
+    end
+
+    subgraph Retrieval & Generation
+        U([User]) --> F[Chat UI<br/>Chainlit]
+        U --> G[REST API<br/>FastAPI]
+        F --> H[Semantic search]
+        G --> H
+        E --> H
+        H --> I[LiteLLM]
+        I --> J[LLM provider<br/>OpenAI / Ollama / etc.]
+        J --> K[Response<br/>with citations]
+        K --> F
+        K --> G
+    end
+```
 
 ## Project components
 
-This project is built on Nava's open source [infrastructure template](https://github.com/navapbc/template-infra) and [Python application template](https://github.com/navapbc/template-application-flask/), part of [Nava's Platform](https://github.com/navapbc/platform).
+This template is built on Nava's open-source [infrastructure template](https://github.com/navapbc/template-infra) and [Python application template](https://github.com/navapbc/template-application-flask/), part of [Nava's Platform](https://github.com/navapbc/platform).
 
- - The application is hosted in AWS, and the infrastructure is defined via Terraform in [/infra](https://github.com/navapbc/labs-decision-support-tool/tree/main/infra).
- - The application code is written in Python and is located in [/app/src](https://github.com/navapbc/labs-decision-support-tool/tree/main/app/src).
-   - Chainlit and FastAPI are used to provide a chatbot interface and an API for third-parties using the chatbot.
-   - LiteLLM provides a vendor-agnostic mechanism for accessing LLMs via an API.
- - The application uses AWS Aurora Serverless v2 as its database in deployed environments and Postgres when run locally. The application uses SQLAlchemy as an ORM, and the schema is controlled with Alembic and Pydantic. Model definitions are located in [app/src/db/models](https://github.com/navapbc/labs-decision-support-tool/tree/main/app/src/db/models).
-   - The pgvector extension is used to provide a `vector` type, used for semantic search and document retrieval.
- - Policy documentation is scraped, parsed, and added to the database via [ingest_runner.py](https://github.com/navapbc/labs-decision-support-tool/tree/main/app/src/ingest_runner.py), which uses Scrapy, Playwright, and Beautiful Soup to parse online documentation. We use a custom parsing pipeline that intelligently splits documentation into semantically-meaningful chunks of content via an approach we call "tree-based chunking", implemented in [ingester.py](https://github.com/navapbc/labs-decision-support-tool/tree/main/app/src/ingester.py).
- - Evaluation code for e.g., automatically measuring the performance of the retrieval pipeline can be found in [/app/notebooks/metrics](https://github.com/navapbc/labs-decision-support-tool/tree/main/app/notebooks/metrics).
- - Additional investigative and exploratory code can be found in [/app/notebooks](https://github.com/navapbc/labs-decision-support-tool/tree/main/app/notebooks).
+- The application is hosted in AWS, with infrastructure defined via Terraform in [/infra](./infra).
+- The application code is written in Python and lives in [/app/src](./app/src).
+  - Chainlit and FastAPI provide the chat UI and a REST API for third-party integrations.
+  - LiteLLM provides a vendor-agnostic interface for accessing LLMs.
+- The application uses AWS Aurora Serverless v2 in deployed environments and Postgres locally. SQLAlchemy is used as the ORM, with Alembic and Pydantic managing the schema. Model definitions live in [app/src/db/models](./app/src/db/models).
+  - The `pgvector` extension provides a `vector` type used for semantic search and document retrieval.
+- Source documentation is scraped, parsed, and indexed via [ingest_runner.py](./app/src/ingest_runner.py), which uses Scrapy, Playwright, and Beautiful Soup. A custom "tree-based chunking" pipeline in [ingester.py](./app/src/ingester.py) splits content into semantically-meaningful chunks.
+- Evaluation code for measuring retrieval-pipeline performance is in [/app/notebooks/metrics](./app/notebooks/metrics).
+- Additional exploratory code and notebooks live in [/app/notebooks](./app/notebooks).
 
 ## Set up and run the application
 
@@ -26,14 +61,18 @@ To set up your local development environment, follow the instructions in [Gettin
 
 ### Managing the chatbot's data
 
-To learn more about how to add additional data (or refresh existing data) in the chatbot, see [Data Management](docs/data-management.md).
+To learn more about how to configure data ingestion and refresh the indexed content, see [Data Management](docs/data-management.md).
 
 ## Research and evaluation
 
-The chatbot has a few special commands built in to support research and evaluation. To learn more about batch processing and how to export user interaction logs, see [Special Commands](docs/special-commands.md).
+The chatbot includes built-in commands for research and evaluation, including batch processing and exporting user interaction logs. See [Special Commands](docs/special-commands.md).
 
-You can use Google Sheets to run promptfoo evaluations against multiple test inputs at once. To learn more about running promptfoo against custom evaluations, see [Promptfoo Evaluations](docs/promptfoo-evaluations.md).
+You can also run [promptfoo](https://www.promptfoo.dev/) evaluations against multiple test inputs using Google Sheets. See [Promptfoo Evaluations](docs/app/evaluation/promptfoo-google-sheets.md).
 
 ## Deploying the application
 
-See [Deployments and Releases](docs/releases.md) for information about cutting deployments to our production environment.
+See [Deployments and Releases](docs/releases.md) for information about deploying to your environments.
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md) for details.

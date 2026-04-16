@@ -20,21 +20,20 @@ The evaluation CLI provides QA generation commands:
 # Generate QA pairs from all documents
 make generate-qa
 
-# Generate from specific dataset with custom LLM
-make generate-qa dataset="imagine_la" llm="gpt-4o-mini"
+# Generate from a specific dataset with a custom LLM
+make generate-qa dataset="<your_dataset_id>" llm="gpt-4o-mini"
 
-# Sample 10% of documents with fixed seed
+# Sample 10% of documents with a fixed seed
 make generate-qa sampling=0.1 random_seed=42
 ```
 
 Arguments:
-- `dataset`: Optional. One or more datasets (e.g., "imagine_la la_policy"). Currently supports:
-  - `imagine_la`: Imagine LA Benefits Information Hub dataset
-  - `la_policy`: LA County Policy dataset
-- `llm`: LLM model to use (default: "gpt-4o-mini")
-- `sampling`: Fraction of documents to sample (e.g., 0.1)
+
+- `dataset`: Optional. One or more dataset IDs, space-separated (e.g., `"<dataset_a> <dataset_b>"`). If omitted, all datasets registered in the codebase are used. The set of valid dataset IDs is determined by the ingestion scripts under `app/src/ingestion/`.
+- `llm`: LLM model to use (default: `"gpt-4o-mini"`)
+- `sampling`: Fraction of documents to sample (e.g., `0.1`)
 - `random_seed`: Random seed for reproducible sampling
-- `output_dir`: Base directory for storing results (default: src/evaluation/data)
+- `output_dir`: Base directory for storing results (default: `src/evaluation/data`)
 
 ## Data Storage
 
@@ -53,7 +52,7 @@ The `qa_pairs.csv` file contains:
 - `question`: Generated question text
 - `answer`: Generated answer text
 - `document_name`: Source document name
-- `document_source`: Source system (e.g., "imagine_la")
+- `document_source`: Source system (e.g., `"<your_dataset_id>"`)
 - `dataset`: Dataset identifier
 - `document_id`: Source document ID
 - `chunk_id`: Source chunk ID (if from chunks)
