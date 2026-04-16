@@ -1,6 +1,6 @@
-# Contributing to the Form-Filling Assistant
+# Contributing to the Assistive chatbot
 
-Thank you for your interest in contributing! The Form-Filling Assistant is an open-source AI tool built by [Nava Labs](https://www.navapbc.com/labs/ai-tools-public-benefits) to help caseworkers navigate benefit portals and complete applications on behalf of the families they serve. We welcome contributions from developers, designers, policy experts, and community members. This document explains how to get involved.
+Thank you for your interest in contributing! The Assistive chatbot is an open-source AI tool built by [Nava Labs](https://www.navapbc.com/labs/ai-tools-public-benefits) to help caseworkers navigate benefit portals and complete applications on behalf of the families they serve. We welcome contributions from developers, designers, policy experts, and community members. This document explains how to get involved.
 
 ## Community
 
@@ -67,4 +67,4 @@ Reviewers will evaluate contributions for:
 
 If you're unsure about anything before contributing, feel free to open a GitHub issue with the `question` label. We'd rather you ask than get stuck.
 
-Thank you for contributing to the Form-Filling Assistant!
+Thank you for contributing to the Assistive chatbot!

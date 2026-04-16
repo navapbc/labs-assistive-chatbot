@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-We always recommend using the latest version of the Form-Filling Assistant to ensure you get all security updates.
+We always recommend using the latest version of the Assistive chatbot to ensure you get all security updates.
 
 ## Reporting vulnerabilities
 
