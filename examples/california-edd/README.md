@@ -12,21 +12,27 @@ A reference implementation for building a chatbot over California's [Employment 
 
 A Scrapy spider that crawls `edd.ca.gov/en/` and extracts page content as structured JSON. Handles EDD-specific HTML patterns including accordion sections and tab panes.
 
+> **Note:** This file lives in `spiders/` for reference purposes as part of the examples directory. In the main application, it belongs at `app/src/ingestion/scrapy_dst/spiders/edd_spider.py` so that Scrapy's `SPIDER_MODULES = ["scrapy_dst.spiders"]` setting can discover it automatically.
+
 ### ingestion/ingest_runner.py
 
 The `edd_config` function configures how scraped EDD content is processed and ingested into the vector store. Shows how to fix EDD-specific markdown quirks before chunking.
 
 ### scrapy_runner.py / scrapy.cfg / scrapy_dst/
 
-Scrapy project infrastructure. `scrapy_runner.py` is the entry point for running spiders.
+Scrapy project infrastructure. `scrapy_runner.py` is the entry point for running spiders. The `scrapy_dst/spiders/` directory is where Scrapy discovers spiders at runtime — any spider you want to run must be placed there.
 
 ## How to Use
 
 ### 1. Set up the spider
 
-Copy `spiders/edd_spider.py` to `app/src/ingestion/scrapy_dst/spiders/edd_spider.py`.
+Copy the spider into the Scrapy project's spider discovery directory:
 
-Run the spider to collect EDD content:
+```bash
+cp spiders/edd_spider.py app/src/ingestion/scrapy_dst/spiders/edd_spider.py
+```
+
+Then run it to collect EDD content:
 ```bash
 cd app/src/ingestion
 python scrapy_runner.py edd

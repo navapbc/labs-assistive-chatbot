@@ -28,7 +28,9 @@ class AppConfig(PydanticBaseEnvConfig):
     port: int = 8080
 
     # CORS configuration
-    # cors_origins: list of exact origins to allow (e.g., ["http://localhost:5173"])
+    # cors_origins: list of exact origins to allow.
+    #   When setting via environment variable, use JSON format:
+    #   CORS_ORIGINS='["http://localhost:5173", "https://myapp.example.com"]'
     # cors_origin_regex: regex pattern for allowed origins (e.g., r"https://myapp\.example\.com")
     cors_origins: list[str] = ["http://localhost:5173"]
     cors_origin_regex: str | None = None
