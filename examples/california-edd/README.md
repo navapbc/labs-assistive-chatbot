@@ -10,48 +10,46 @@ A reference implementation for building a chatbot over California's [Employment 
 
 ### spiders/edd_spider.py
 
-A Scrapy spider that crawls `edd.ca.gov/en/` and extracts page content as structured JSON. Handles EDD-specific HTML patterns including accordion sections and tab panes.
-
-> **Note:** This file lives in `spiders/` for reference purposes as part of the examples directory. In the main application, it belongs at `app/src/ingestion/scrapy_dst/spiders/edd_spider.py` so that Scrapy's `SPIDER_MODULES = ["scrapy_dst.spiders"]` setting can discover it automatically.
+A Scrapy spider that crawls `edd.ca.gov/en/` and extracts page content as structured JSON. Handles EDD-specific HTML patterns including accordion sections and tab panes. Scrapy discovers spiders under `scrapy_dst/spiders/` (per the `SPIDER_MODULES` setting), so the spider must be moved there before it can be run.
 
 ### ingestion/ingest_runner.py
 
-The `edd_config` function configures how scraped EDD content is processed and ingested into the vector store. Shows how to fix EDD-specific markdown quirks before chunking.
+Shows how `edd_config` configures ingestion for scraped EDD content (including EDD-specific markdown fixes applied before chunking). This repo's `app/src/ingest_runner.py` already contains this function and an `"edd"` case in `get_ingester_config()`; the file here is a reference for adapting the pattern to a different app.
 
 ### scrapy_runner.py / scrapy.cfg / scrapy_dst/
 
-Scrapy project infrastructure. `scrapy_runner.py` is the entry point for running spiders. The `scrapy_dst/spiders/` directory is where Scrapy discovers spiders at runtime — any spider you want to run must be placed there.
+A self-contained Scrapy project. `scrapy_runner.py` is the entry point. `scrapy_dst/` holds settings, pipelines, and the `spiders/` discovery directory.
 
 ## How to Use
 
-### 1. Set up the spider
+The example is a standalone Scrapy project — you can run the scrape in-place from `examples/california-edd/` without copying files into the app.
 
-Copy the spider into the Scrapy project's spider discovery directory:
+### 1. Scrape EDD content
+
+Move the spider into Scrapy's discovery directory, then run it from this example directory:
 
 ```bash
-cp spiders/edd_spider.py app/src/ingestion/scrapy_dst/spiders/edd_spider.py
-```
-
-Then run it to collect EDD content:
-```bash
-cd app/src/ingestion
+cd examples/california-edd
+mv spiders/edd_spider.py scrapy_dst/spiders/edd_spider.py
 python scrapy_runner.py edd
 ```
 
-This produces `edd_scrapings.json`.
+This produces `edd_scrapings.json` in the current directory.
 
 ### 2. Ingest the content
 
-Copy the `edd_config` function from `ingestion/ingest_runner.py` into `app/src/ingest_runner.py` and add an `"edd"` case to `get_ingester_config()`:
+This repo's `app/src/ingest_runner.py` already registers the `"edd"` dataset, so you can ingest the JSON directly:
+
+```bash
+cd app
+poetry run ingest-runner edd --json_input /absolute/path/to/edd_scrapings.json
+```
+
+If you are adapting this example to a different app that does not already have `edd_config`, copy the function from `ingestion/ingest_runner.py` into your app's `ingest_runner.py` and add a case to `get_ingester_config()`:
 
 ```python
 case "edd":
     return edd_config("CA EDD", "employment", "California", scraper_dataset)
-```
-
-Then run ingestion:
-```bash
-poetry run ingest-runner edd --json_input path/to/edd_scrapings.json
 ```
 
 ### 3. Set up the engine

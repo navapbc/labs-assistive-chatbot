@@ -1,12 +1,15 @@
 """
-EDD-specific ingestion runner.
+EDD-specific ingestion runner (reference).
 
-This shows how to configure ingestion for edd.ca.gov content scraped by edd_spider.py.
-Copy this into app/src/ingest_runner.py (or merge the edd_config function into your
-existing ingest_runner.py) and add an "edd" case to get_ingester_config().
+Shows how to configure ingestion for edd.ca.gov content scraped by edd_spider.py.
 
-Usage:
-    poetry run ingest-runner edd --json_input path/to/edd_scrapings.json
+In this repo, `edd_config` and the `"edd"` case in `get_ingester_config()` are already
+present in app/src/ingest_runner.py — you do not need to copy anything to run the EDD
+example here; just run `poetry run ingest-runner edd --json_input path/to/edd_scrapings.json`.
+
+If you are adapting this example to a different app that doesn't already have `edd_config`,
+copy the function below into your app's `ingest_runner.py` and add an `"edd"` case to
+`get_ingester_config()`.
 """
 
 import re
