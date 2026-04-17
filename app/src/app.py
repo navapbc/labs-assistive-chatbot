@@ -9,9 +9,8 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    # Imagine LA uses port 5173 for development
-    allow_origins=["http://localhost:5173"],
-    allow_origin_regex=r"https://(dev-social-benefits-navigator[a-zA-Z0-9-]+|benefitnavigator)\.web\.app",
+    allow_origins=app_config.cors_origins,
+    allow_origin_regex=app_config.cors_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

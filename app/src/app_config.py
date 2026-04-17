@@ -27,6 +27,14 @@ class AppConfig(PydanticBaseEnvConfig):
     host: str = "127.0.0.1"
     port: int = 8080
 
+    # CORS configuration
+    # cors_origins: list of exact origins to allow.
+    #   When setting via environment variable, use JSON format:
+    #   CORS_ORIGINS='["http://localhost:5173", "https://myapp.example.com"]'
+    # cors_origin_regex: regex pattern for allowed origins (e.g., r"https://myapp\.example\.com")
+    cors_origins: list[str] = ["http://localhost:5173"]
+    cors_origin_regex: str | None = None
+
     # Used for ingestion (before chatbot application starts) and retrieval (during chatbot interactions)
     embedding_model_name: str = "multi-qa-mpnet-base-cos-v1"
 
