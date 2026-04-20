@@ -42,7 +42,7 @@ def test_document():
         name="test_doc",
         content="Test document content",
         source="test_dataset",
-        dataset="CA FTB",  # Use a valid dataset from our mapping
+        dataset="test_dataset",
     )
     chunk = ChunkFactory.build(
         document=document,
@@ -66,7 +66,7 @@ def test_questions_csv(tmp_path, test_document):
             id="1",
             question="test question 1?",
             answer="test answer 1",
-            dataset="CA FTB",
+            dataset="test_dataset",
             document_name=test_document.name,
             document_source="test_dataset",
             document_id="doc1",
@@ -198,7 +198,7 @@ def test_main_with_dataset(
         [
             "evaluate.py",
             "--dataset",
-            "ca_ftb",  # Use a valid dataset from our mapping
+            "test_dataset",
             "--k",
             "5",  # Only test with one k value
             "--output-dir",
@@ -421,7 +421,7 @@ def test_main_integration(
         [
             "evaluate.py",
             "--dataset",
-            "ca_ftb",  # Use a valid dataset from our mapping
+            "test_dataset",
             "--k",
             "1",
             "--output-dir",
@@ -446,4 +446,4 @@ def test_main_integration(
         # Verify results contain only CA FTB questions
         with open(results_files[0]) as f:
             results = [json.loads(line) for line in f if line.strip()]
-            assert all(r["dataset"] == "CA FTB" for r in results)
+            assert all(r["dataset"] == "test_dataset" for r in results)

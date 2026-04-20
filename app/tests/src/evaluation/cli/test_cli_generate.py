@@ -107,7 +107,7 @@ def test_main_integration(temp_output_dir, app_config):
         [
             "generate.py",
             "--dataset",
-            "ca_ftb",
+            "test_dataset",
             "--output-dir",
             str(temp_output_dir),
             "--llm",

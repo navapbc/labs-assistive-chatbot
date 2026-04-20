@@ -9,11 +9,7 @@ from typing import Any, Callable, Optional
 
 from src.app_config import app_config
 from src.ingester import ingest_json
-from src.util.ingest_utils import (
-    IngestConfig,
-    drop_existing_dataset,
-    start_ingestion,
-)
+from src.util.ingest_utils import IngestConfig, drop_existing_dataset, start_ingestion
 
 logger = logging.getLogger(__name__)
 

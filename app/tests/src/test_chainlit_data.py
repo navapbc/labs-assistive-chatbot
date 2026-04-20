@@ -138,5 +138,3 @@ async def test_1_data_layer(db_session, monkeypatch):
     await data_layer.delete_thread(thread_id)
     thread_dict = await data_layer.get_thread(thread_id)
     assert thread_dict is None
-
-

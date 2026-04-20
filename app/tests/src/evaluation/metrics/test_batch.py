@@ -129,7 +129,7 @@ def test_filter_questions(monkeypatch):
     assert len(filtered) == 0
 
     # Test case sensitivity and mapping
-    filtered = filter_questions(questions, ["CA_FTB"])
+    filtered = filter_questions(questions, ["FOO"])
     assert len(filtered) == 1
     assert filtered[0]["question"] == "q1"
 
