@@ -93,11 +93,21 @@ def test_create_batch_config():
         assert config.software_info.git_commit == "def456"
 
 
-def test_filter_questions():
+def test_filter_questions(monkeypatch):
     """Test question filtering by dataset."""
+    from types import MappingProxyType
+
+    from src.evaluation.utils import dataset_mapping as dataset_mapping_module
+
+    monkeypatch.setattr(
+        dataset_mapping_module,
+        "DATASET_MAPPING",
+        MappingProxyType({"foo": "Foo Dataset", "bar": "Bar Dataset"}),
+    )
+
     questions = [
-        {"dataset": "CA FTB", "question": "q1"},
-        {"dataset": "DPSS Policy", "question": "q2"},
+        {"dataset": "Foo Dataset", "question": "q1"},
+        {"dataset": "Bar Dataset", "question": "q2"},
         {"dataset": "Other Dataset", "question": "q3"},
     ]
 
@@ -105,12 +115,12 @@ def test_filter_questions():
     assert len(filter_questions(questions, None)) == 3
 
     # Test filtering single dataset
-    filtered = filter_questions(questions, ["ca_ftb"])
+    filtered = filter_questions(questions, ["foo"])
     assert len(filtered) == 1
     assert filtered[0]["question"] == "q1"
 
     # Test filtering multiple datasets
-    filtered = filter_questions(questions, ["ca_ftb", "la_policy"])
+    filtered = filter_questions(questions, ["foo", "bar"])
     assert len(filtered) == 2
     assert {q["question"] for q in filtered} == {"q1", "q2"}
 
@@ -119,7 +129,7 @@ def test_filter_questions():
     assert len(filtered) == 0
 
     # Test case sensitivity and mapping
-    filtered = filter_questions(questions, ["CA_FTB"])
+    filtered = filter_questions(questions, ["FOO"])
     assert len(filtered) == 1
     assert filtered[0]["question"] == "q1"
 

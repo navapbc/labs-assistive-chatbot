@@ -42,7 +42,7 @@ def test_document():
         name="test_doc",
         content="Test document content",
         source="test_dataset",
-        dataset="CA FTB",  # Use a valid dataset from our mapping
+        dataset="test_dataset",
     )
     chunk = ChunkFactory.build(
         document=document,
@@ -66,7 +66,7 @@ def test_questions_csv(tmp_path, test_document):
             id="1",
             question="test question 1?",
             answer="test answer 1",
-            dataset="CA FTB",
+            dataset="test_dataset",
             document_name=test_document.name,
             document_source="test_dataset",
             document_id="doc1",
@@ -80,7 +80,7 @@ def test_questions_csv(tmp_path, test_document):
             id="2",
             question="test question 2?",
             answer="test answer 2",
-            dataset="DPSS Policy",
+            dataset="Other Dataset",
             document_name="other_doc",
             document_source="other_dataset",
             document_id="doc2",
@@ -198,7 +198,7 @@ def test_main_with_dataset(
         [
             "evaluate.py",
             "--dataset",
-            "ca_ftb",  # Use a valid dataset from our mapping
+            "test_dataset",
             "--k",
             "5",  # Only test with one k value
             "--output-dir",
@@ -311,17 +311,27 @@ def test_error_handling(temp_output_dir, mock_git_commit, mock_retrieval_func):
             evaluate.main()
 
 
-def test_dataset_mapping():
+def test_dataset_mapping(monkeypatch):
     """Test dataset name mapping functionality."""
-    # Test known dataset mapping
-    assert map_dataset_name("ca_ftb") == "CA FTB"
-    assert map_dataset_name("la_policy") == "DPSS Policy"
+    from types import MappingProxyType
 
-    # Test case sensitivity
-    assert map_dataset_name("CA_FTB") == "CA FTB"
-    assert map_dataset_name("LA_POLICY") == "DPSS Policy"
+    from src.evaluation.utils import dataset_mapping as dataset_mapping_module
 
-    # Test unknown dataset (should return original name)
+    monkeypatch.setattr(
+        dataset_mapping_module,
+        "DATASET_MAPPING",
+        MappingProxyType({"foo": "Foo Dataset", "bar": "Bar Dataset"}),
+    )
+
+    # Known aliases map to their human-readable label.
+    assert map_dataset_name("foo") == "Foo Dataset"
+    assert map_dataset_name("bar") == "Bar Dataset"
+
+    # Case insensitive.
+    assert map_dataset_name("FOO") == "Foo Dataset"
+    assert map_dataset_name("Bar") == "Bar Dataset"
+
+    # Unknown names pass through unchanged.
     assert map_dataset_name("unknown_dataset") == "unknown_dataset"
 
 
@@ -341,8 +351,8 @@ def test_argument_parsing():
     args = parser.parse_args(
         [
             "--dataset",
-            "ca_ftb",
-            "la_policy",
+            "dataset_a",
+            "dataset_b",
             "--k",
             "3",
             "7",
@@ -354,7 +364,7 @@ def test_argument_parsing():
             "42",
         ]
     )
-    assert args.dataset == ["ca_ftb", "la_policy"]
+    assert args.dataset == ["dataset_a", "dataset_b"]
     assert args.k == [3, 7]
     assert args.min_score == 0.5
     assert args.sampling == 0.1
@@ -411,7 +421,7 @@ def test_main_integration(
         [
             "evaluate.py",
             "--dataset",
-            "ca_ftb",  # Use a valid dataset from our mapping
+            "test_dataset",
             "--k",
             "1",
             "--output-dir",
@@ -436,4 +446,4 @@ def test_main_integration(
         # Verify results contain only CA FTB questions
         with open(results_files[0]) as f:
             results = [json.loads(line) for line in f if line.strip()]
-            assert all(r["dataset"] == "CA FTB" for r in results)
+            assert all(r["dataset"] == "test_dataset" for r in results)

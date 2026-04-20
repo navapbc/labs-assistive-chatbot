@@ -30,7 +30,7 @@ def upgrade():
             user_session = UserSession(
                 session_id=session_id,
                 user_id="CREATED_TO_ADD_FOREIGN_KEY_CONSTRAINT",
-                chat_engine_id="imagine-la",
+                chat_engine_id="legacy-unknown",
                 thread_id=None,
             )
             session.add(user_session)

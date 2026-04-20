@@ -13,7 +13,6 @@ from src.chat_api import (
     ChatEngineSettings,
     ChatSession,
     QueryResponse,
-    app_config,
     get_chat_engine,
     router,
     run_query,

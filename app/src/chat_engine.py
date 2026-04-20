@@ -290,6 +290,5 @@ class BaseEngine(ChatEngineInterface):
             return generator, attributes, subsections
 
 
-
 # Import engine subclass modules so they are discovered by available_engines()
 import src.engines  # noqa: F401, E402

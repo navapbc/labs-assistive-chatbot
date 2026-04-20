@@ -18,17 +18,26 @@ def temp_output_dir():
         yield Path(tmpdirname)
 
 
-def test_dataset_mapping():
+def test_dataset_mapping(monkeypatch):
     """Test dataset name mapping functionality."""
-    # Test known dataset mapping
-    assert map_dataset_name("ca_ftb") == "CA FTB"
-    assert map_dataset_name("la_policy") == "DPSS Policy"
+    from types import MappingProxyType
 
-    # Test case sensitivity
-    assert map_dataset_name("CA_FTB") == "CA FTB"
-    assert map_dataset_name("LA_POLICY") == "DPSS Policy"
+    from src.evaluation.utils import dataset_mapping as dataset_mapping_module
 
-    # Test unknown dataset (should return original name)
+    monkeypatch.setattr(
+        dataset_mapping_module,
+        "DATASET_MAPPING",
+        MappingProxyType({"foo": "Foo Dataset", "bar": "Bar Dataset"}),
+    )
+
+    assert map_dataset_name("foo") == "Foo Dataset"
+    assert map_dataset_name("bar") == "Bar Dataset"
+
+    # Case insensitive.
+    assert map_dataset_name("FOO") == "Foo Dataset"
+    assert map_dataset_name("Bar") == "Bar Dataset"
+
+    # Unknown names pass through unchanged.
     assert map_dataset_name("unknown_dataset") == "unknown_dataset"
 
 
@@ -47,8 +56,8 @@ def test_argument_parsing():
     args = parser.parse_args(
         [
             "--dataset",
-            "ca_ftb",
-            "la_policy",
+            "dataset_a",
+            "dataset_b",
             "--sampling",
             "0.1",
             "--random-seed",
@@ -57,7 +66,7 @@ def test_argument_parsing():
             "gpt-4",
         ]
     )
-    assert args.dataset == ["ca_ftb", "la_policy"]
+    assert args.dataset == ["dataset_a", "dataset_b"]
     assert args.sampling == 0.1
     assert args.random_seed == 42
     assert args.llm == "gpt-4"
@@ -98,7 +107,7 @@ def test_main_integration(temp_output_dir, app_config):
         [
             "generate.py",
             "--dataset",
-            "ca_ftb",
+            "test_dataset",
             "--output-dir",
             str(temp_output_dir),
             "--llm",

@@ -6,7 +6,13 @@ from unittest.mock import Mock
 import pytest
 
 from src import ingest_runner
-from src.ingest_runner import main
+from src.ingest_runner import (
+    _default_prep_json_item,
+    _load_config_builder,
+    build_ingester_config,
+    get_ingester_config,
+    main,
+)
 from src.util.ingest_utils import IngestConfig
 
 FILE_1_JSON_OBJS = [
@@ -60,7 +66,7 @@ def patch_ingest_runner(monkeypatch):
     monkeypatch.setattr(
         ingest_runner,
         "get_ingester_config",
-        lambda x: IngestConfig(
+        lambda dataset, args=None: IngestConfig(
             "Test ingest runner", "", "", "https://test.org/", "test_ingest_runner"
         ),
     )
@@ -116,3 +122,66 @@ def test_main__default_json_file(monkeypatch):
     assert (
         mock_start_ingestion.call_args.args[2] == "src/ingestion/test_ingest_runner_scrapings.json"
     )
+
+
+def test_default_prep_json_item__passthrough():
+    item = {"markdown": "already set"}
+    _default_prep_json_item(item)
+    assert item["markdown"] == "already set"
+
+
+def test_default_prep_json_item__promotes_main_content():
+    item = {"main_content": "body"}
+    _default_prep_json_item(item)
+    assert item["markdown"] == "body"
+
+
+def test_default_prep_json_item__promotes_main_primary():
+    item = {"main_primary": "body"}
+    _default_prep_json_item(item)
+    assert item["markdown"] == "body"
+
+
+def test_default_prep_json_item__raises_when_no_content():
+    with pytest.raises(ValueError, match="has no 'markdown'"):
+        _default_prep_json_item({"url": "https://example.com/x"})
+
+
+def test_build_ingester_config__defaults():
+    config = build_ingester_config("my_dataset")
+    assert config.dataset_label == "my_dataset"
+    assert config.scraper_dataset == "my_dataset"
+    assert config.prep_json_item is _default_prep_json_item
+
+
+def test_build_ingester_config__with_config_module(monkeypatch):
+    def fake_builder(**kwargs):
+        return IngestConfig(
+            kwargs["dataset_label"], "", "", kwargs["common_base_url"], kwargs["dataset"]
+        )
+
+    monkeypatch.setattr(ingest_runner, "_load_config_builder", lambda spec: fake_builder)
+    config = build_ingester_config(
+        "my_dataset",
+        dataset_label="My Label",
+        common_base_url="https://x/",
+        config_module="some.module",
+    )
+    assert config.dataset_label == "My Label"
+
+
+def test_get_ingester_config__no_args():
+    config = get_ingester_config("my_dataset")
+    assert config.dataset_label == "my_dataset"
+
+
+def test_load_config_builder(monkeypatch):
+    import types
+
+    fake_module = types.ModuleType("fake_builder_module")
+    fake_module.build_config = lambda **kw: "default-builder"
+    fake_module.custom = lambda **kw: "custom-builder"
+    monkeypatch.setitem(sys.modules, "fake_builder_module", fake_module)
+
+    assert _load_config_builder("fake_builder_module")() == "default-builder"
+    assert _load_config_builder("fake_builder_module:custom")() == "custom-builder"

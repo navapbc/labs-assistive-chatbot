@@ -21,7 +21,7 @@ def generate_qa_pair_id(question: str, answer: str, dataset: str) -> str:
     Args:
         question: The question text
         answer: The expected answer text
-        dataset: The dataset identifier (e.g., "imagine_la")
+        dataset: The dataset identifier (e.g., "my_docs")
 
     Returns:
         UUID string stable on QA and dataset content

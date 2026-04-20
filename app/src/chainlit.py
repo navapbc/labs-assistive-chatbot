@@ -354,5 +354,3 @@ async def _batch_proccessing(file: AskFileResponse) -> None:
             content=f"batch_process: {err.__class__.__name__}: {err}",
         ).send()
         logger.exception("batch_process error", stack_info=True)
-
-

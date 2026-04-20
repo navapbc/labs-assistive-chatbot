@@ -45,8 +45,6 @@ documents/
 #.chainlit/translations/*.json
 #!.chainlit/translations/en-US.json
 
-/src/ingestion/imagine_la/pages*
-
 # intermediate markdown files during ingestion
 /*_md/
 /logs/
