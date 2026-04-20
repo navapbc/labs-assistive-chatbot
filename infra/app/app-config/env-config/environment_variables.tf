@@ -7,6 +7,10 @@ locals {
     # WORKER_THREADS_COUNT    = 4
     # LOG_LEVEL               = "info"
     # DB_CONNECTION_POOL_SIZE = 5
+
+    # CORS configuration for the chat API. Provide as a JSON-encoded list of
+    # allowed origins. Override per environment via `service_override_extra_environment_variables`.
+    # CORS_ORIGINS = jsonencode(["https://myapp.example.com"])
   }
 
   # Configuration for secrets
