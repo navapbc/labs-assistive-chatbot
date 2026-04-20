@@ -62,25 +62,41 @@ jobs:
           python3 -m pip install textdescriptives spacy
           python3 -m spacy download en_core_web_sm
 
+      - name: Check for required secrets
+        id: check_secrets
+        run: |
+          if [ -z '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' ] || [ -z '${{ secrets.GOOGLE_SHEET_INPUT_URL }}' ] || [ -z '${{ secrets.OPENAI_API_KEY }}' ]; then
+            echo "Required secrets not configured (GOOGLE_CREDENTIALS_JSON, GOOGLE_SHEET_INPUT_URL, OPENAI_API_KEY). Skipping evaluation."
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "skip=false" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Set up Google Cloud credentials
+        if: steps.check_secrets.outputs.skip != 'true'
         run: |
           echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > "/tmp/gcp-creds.json"
-          jq -e . "/tmp/gcp-creds.json" > /dev/null || echo "Warning: Invalid JSON format in credentials"
+          if ! jq -e . "/tmp/gcp-creds.json" > /dev/null 2>&1; then
+            echo "Error: GOOGLE_CREDENTIALS_JSON secret does not contain valid JSON"
+            exit 1
+          fi
           echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-creds.json" >> "${GITHUB_ENV}"
 
       - name: Install promptfoo and googleapis
+        if: steps.check_secrets.outputs.skip != 'true'
         run: |
           npm install -g promptfoo --no-fund --no-audit --loglevel=error
           npm install -g googleapis
           npm install -g @actions/core @actions/github
 
       - name: Authenticate with Promptfoo
-        if: env.PROMPTFOO_API_KEY != ''
+        if: steps.check_secrets.outputs.skip != 'true' && env.PROMPTFOO_API_KEY != ''
         run: |
           # Authenticate with Promptfoo using the login command
           promptfoo auth login --host https://api.promptfoo.app --api-key "${PROMPTFOO_API_KEY}"
 
       - name: Process config file
+        if: steps.check_secrets.outputs.skip != 'true'
         run: |
           cp app/promptfoo/generateUniqueId.js /tmp/generateUniqueId.js
           cp app/promptfoo/readability_assessment.py /tmp/readability_assessment.py
@@ -94,6 +110,7 @@ jobs:
 
       - name: Run promptfoo evaluation
         id: eval
+        if: steps.check_secrets.outputs.skip != 'true'
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-creds.json
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -145,7 +162,7 @@ jobs:
           fi
 
       - name: Create PR comment
-        if: github.event_name == 'pull_request'
+        if: steps.check_secrets.outputs.skip != 'true' && github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
