@@ -58,6 +58,8 @@ This project has the following AWS environments:
 
 The environments share the same root modules but will have different configurations. Backend configuration is saved as [`.tfbackend`](https://developer.hashicorp.com/terraform/language/backend#file) files. Most `.tfbackend` files are named after the environment. For example, the `<APP_NAME>/service` infrastructure resources for the `dev` environment are configured via `dev.s3.tfbackend`. Resources for a module that are shared across environments, such as the build-repository, use `shared.s3.tfbackend`. Resources that are shared across the entire account (e.g. /infra/accounts) use `<account name>.<account id>.s3.tfbackend`.
 
+> **Note for adopters:** `.s3.tfbackend` files are **not checked in** to this repository — they embed your AWS account ID and environment-specific bucket/table names. Only [`infra/example.s3.tfbackend`](./example.s3.tfbackend) (the template) is committed. The set-up docs linked in [First time initialization](#1️⃣-first-time-initialization) walk you through generating the backend files for your own AWS account via [`bin/create-tfbackend`](/bin/create-tfbackend).
+
 ### 🔀 Project workflow
 
 This project relies on Make targets in the [root Makefile](/Makefile), which in turn call shell scripts in [./bin](/bin). The shell scripts call `terraform` commands. Many of the shell scripts are also called by the [Github Actions CI/CD](/.github/workflows).

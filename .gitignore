@@ -11,6 +11,8 @@
 
 # Ignore develop-specific VS code settings files
 .vscode
+.idea/
+.claude/
 
 # Ignore local environment variables which can contain environment secrets
 .env
