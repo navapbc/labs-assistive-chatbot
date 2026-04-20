@@ -19,7 +19,7 @@ def create_parser() -> argparse.ArgumentParser:
         "--dataset",
         type=str,
         nargs="+",
-        help="One or more datasets to generate QA pairs for (e.g., imagine_la la_policy). If not specified, generates for all datasets.",
+        help="One or more datasets to generate QA pairs for (matches the dataset IDs used during ingestion). If not specified, generates for all datasets.",
         required=False,
         default=None,
     )

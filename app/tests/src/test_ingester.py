@@ -7,7 +7,7 @@ from sqlalchemy import delete, select
 
 from src.app_config import app_config as app_config_for_test
 from src.db.models.document import Document
-from src.ingest_runner import get_ingester_config
+from src.ingest_runner import build_ingester_config
 from src.ingester import ingest_json
 
 
@@ -102,7 +102,13 @@ def test__ingester__edd(caplog, app_config, db_session, local_file, s3_file, fil
     db_session.execute(delete(Document))
 
     with TemporaryDirectory(suffix="edd_md") as md_base_dir:
-        config = get_ingester_config("edd")
+        config = build_ingester_config(
+            "edd",
+            dataset_label="CA EDD",
+            benefit_program="employment",
+            benefit_region="California",
+            common_base_url="https://edd.ca.gov/en/",
+        )
         with caplog.at_level(logging.WARNING):
             json_file_path = local_file if file_location == "local" else s3_file
             ingest_json(db_session, json_file_path, config, md_base_dir=md_base_dir, resume=True)

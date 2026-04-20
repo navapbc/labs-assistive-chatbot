@@ -246,36 +246,6 @@ help: ## Prints the help documentation and info about each command
 # ETL
 ##################################################
 
-check-ingest-arguments:
-ifndef DATASET_ID
-	$(error DATASET_ID is undefined)
-endif
-ifndef BENEFIT_PROGRAM
-	$(error BENEFIT_PROGRAM is undefined)
-endif
-ifndef BENEFIT_REGION
-	$(error BENEFIT_REGION is undefined)
-endif
-ifndef FILEPATH
-	$(error FILEPATH is undefined)
-endif
-
-
-scrape-imagine-la:
-	$(PY_RUN_CMD) scrape-imagine-la
-
-ingest-imagine-la: check-ingest-arguments
-	$(PY_RUN_CMD) ingest-imagine-la "$(DATASET_ID)" "$(BENEFIT_PROGRAM)" "$(BENEFIT_REGION)" "$(FILEPATH)" $(args)
-
-
-scrape-la-county-policy:
-	# Use playwright to scrape dynamic la_policy_nav_bar.html, required for the next step
-	cd src/ingestion/la_policy/scrape; uv run --no-project scrape_la_policy_nav_bar.py
-
-	@echo '--------------------------------------------------------------------------'
-	@echo 'Now that we have the expanded nav bar, scrape all the links in the nav bar'
-	@echo 'Next, please run: make scrapy-runner args="la_policy --debug"'
-
 scrapy-runner: ## Scrape website using a Scrapy spider: `make scrapy-runner args="dataset"`
 	$(PY_RUN_CMD) scrapy-runner $(args)
 

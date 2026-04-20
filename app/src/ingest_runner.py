@@ -1,15 +1,15 @@
 import argparse
+import importlib
 import json
 import logging
 import os
-import re
 import sys
 from pathlib import Path
+from typing import Any, Callable, Optional
 
 from src.app_config import app_config
 from src.ingester import ingest_json
 from src.util.ingest_utils import (
-    DefaultChunkingConfig,
     IngestConfig,
     drop_existing_dataset,
     start_ingestion,
@@ -18,112 +18,77 @@ from src.util.ingest_utils import (
 logger = logging.getLogger(__name__)
 
 
-def edd_config(
-    dataset_label: str, benefit_program: str, benefit_region: str, scraper_dataset: str
-) -> IngestConfig:
-    def _fix_input_markdown(markdown: str) -> str:
-        # Fix ellipsis text that causes markdown parsing errors
-        # '. . .' is parsed as sublists on the same line
-        # in https://edd.ca.gov/en/uibdg/total_and_partial_unemployment_tpu_5/
-        markdown = markdown.replace(". . .", "...")
-
-        # Nested sublist '* + California's New Application' created without parent list
-        # in https://edd.ca.gov/en/about_edd/eddnext
-        markdown = markdown.replace("* + ", "    + ")
-
-        # Blank sublist '* ###" in https://edd.ca.gov/en/unemployment/Employer_Information/
-        # Tab labels are parsed into list items with headings; remove them
-        markdown = re.sub(r"^\s*\* #+", "", markdown, flags=re.MULTILINE)
-
-        # Blank sublist '* +" in https://edd.ca.gov/en/unemployment/Employer_Information/
-        # Empty sublist '4. * ' in https://edd.ca.gov/en/about_edd/your-benefit-payment-options/
-        # Remove empty nested sublists
-        markdown = re.sub(
-            r"^\s*(\w+\.|\*|\+|\-) (\w+\.|\*|\+|\-)\s*$", "", markdown, flags=re.MULTILINE
+def _default_prep_json_item(item: dict[str, Any]) -> None:
+    """Promote common scraped-content fields into the ``markdown`` field expected by the ingester."""
+    if "markdown" in item and item["markdown"]:
+        return
+    markdown = item.get("main_content") or item.get("main_primary")
+    if not markdown:
+        raise ValueError(
+            f"Item {item.get('url', '<unknown>')} has no 'markdown', 'main_content', or 'main_primary' field. "
+            "Provide a --config-module with a custom prep_json_item if your scrape uses different field names."
         )
-        return markdown
-
-    def prep_json_item(item: dict[str, str]) -> None:
-        markdown = item.get("main_content", item.get("main_primary", None))
-        assert markdown, f"Item {item['url']} has no main_content or main_primary"
-        item["markdown"] = _fix_input_markdown(markdown)
-
-    return IngestConfig(
-        dataset_label,
-        benefit_program,
-        benefit_region,
-        "https://edd.ca.gov/en/",
-        scraper_dataset,
-        prep_json_item,
-    )
+    item["markdown"] = markdown
 
 
-def la_policy_config(
-    dataset_label: str, benefit_program: str, benefit_region: str, scraper_dataset: str
+def _load_config_builder(spec: str) -> Callable[..., IngestConfig]:
+    """Import a config-builder callable from ``module.path`` or ``module.path:attr``.
+
+    The callable must accept the same keyword args as :func:`build_ingester_config`
+    and return an :class:`IngestConfig`.
+    """
+    module_name, _, attr = spec.partition(":")
+    module = importlib.import_module(module_name)
+    return getattr(module, attr or "build_config")
+
+
+def build_ingester_config(
+    dataset: str,
+    *,
+    dataset_label: Optional[str] = None,
+    benefit_program: str = "",
+    benefit_region: str = "",
+    common_base_url: str = "",
+    config_module: Optional[str] = None,
 ) -> IngestConfig:
-    chunking_config = DefaultChunkingConfig()
-    # The document name is the same as item["h2"], so it is redundant to include it in the headings
-    chunking_config.include_doc_name_in_headings = False
+    """Build an :class:`IngestConfig` from CLI arguments.
 
-    def prep_json_item(item: dict[str, str]) -> None:
-        # More often than not, the h2 heading is better suited as the title
-        item["title"] = item["h2"]
-
-        # Include the program name in the document title
-        program_name = item["h1"]
-        item["title"] = f"{program_name}: {item['title']}"
+    If ``config_module`` is provided, delegate to that module's builder. Otherwise,
+    construct a config from the given flags with a generic ``prep_json_item``
+    that maps ``main_content``/``main_primary`` into ``markdown``.
+    """
+    if config_module:
+        builder = _load_config_builder(config_module)
+        return builder(
+            dataset=dataset,
+            dataset_label=dataset_label or dataset,
+            benefit_program=benefit_program,
+            benefit_region=benefit_region,
+            common_base_url=common_base_url,
+        )
 
     return IngestConfig(
-        dataset_label,
+        dataset_label or dataset,
         benefit_program,
         benefit_region,
-        "https://epolicy.dpss.lacounty.gov/epolicy/epolicy/server/general/projects_responsive/ePolicyMaster/mergedProjects/",
-        scraper_dataset,
-        prep_json_item,
-        chunking_config,
+        common_base_url,
+        dataset,
+        _default_prep_json_item,
     )
 
 
-def get_ingester_config(scraper_dataset: str) -> IngestConfig:  # pragma: no cover
-    match scraper_dataset:
-        case "ca_ftb":
-            return IngestConfig(
-                "CA FTB", "tax credit", "California", "https://www.ftb.ca.gov/", scraper_dataset
-            )
-        case "ca_public_charge":
-            return IngestConfig(
-                "Keep Your Benefits",
-                "mixed",
-                "California",
-                "https://keepyourbenefits.org/en/ca/",
-                scraper_dataset,
-            )
-        case "ca_wic":
-            return IngestConfig(
-                "WIC", "wic", "California", "https://www.phfewic.org/en/", scraper_dataset
-            )
-        case "covered_ca":
-            return IngestConfig(
-                "Covered California",
-                "insurance",
-                "California",
-                "https://www.coveredca.com/",
-                scraper_dataset,
-            )
-        case "edd":
-            return edd_config("CA EDD", "employment", "California", scraper_dataset)
-        case "irs":
-            return IngestConfig("IRS", "tax credit", "US", "https://www.irs.gov/", scraper_dataset)
-        case "la_policy":
-            return la_policy_config("DPSS Policy", "mixed", "California:LA County", scraper_dataset)
-        case "ssa":
-            return IngestConfig(
-                "SSA", "social security", "US", "https://www.ssa.gov/", scraper_dataset
-            )
-        case _:
-            raise ValueError(
-                f"Unknown dataset: {scraper_dataset!r}.  Run `make scrapy-runner` to see available datasets"
-            )
+def get_ingester_config(dataset: str, args: Optional[argparse.Namespace] = None) -> IngestConfig:
+    """Thin wrapper over :func:`build_ingester_config` for CLI use."""
+    if args is None:
+        return build_ingester_config(dataset)
+    return build_ingester_config(
+        dataset,
+        dataset_label=args.dataset_label,
+        benefit_program=args.benefit_program,
+        benefit_region=args.benefit_region,
+        common_base_url=args.common_base_url,
+        config_module=args.config_module,
+    )
 
 
 # Print INFO messages since this is often run from the terminal during local development
@@ -153,8 +118,37 @@ def conditionally_consolidate_json_files(json_files: list[str], outfile_prefix: 
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("dataset", help="scraper dataset id from `make scrapy-runner`")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Ingest scraped JSON content into the vector DB. "
+            "Configure the dataset inline with --dataset-label/--benefit-program/... or "
+            "via --config-module for datasets that need custom pre-processing."
+        )
+    )
+    parser.add_argument("dataset", help="Dataset/scraper ID (matches the Scrapy spider name)")
+    parser.add_argument(
+        "--dataset-label",
+        default=None,
+        help="Human-readable dataset label shown in citations (defaults to the dataset ID)",
+    )
+    parser.add_argument("--benefit-program", default="", help="Program tag (e.g., 'employment')")
+    parser.add_argument(
+        "--benefit-region", default="", help="Region tag (e.g., 'California', 'US')"
+    )
+    parser.add_argument(
+        "--common-base-url",
+        default="",
+        help="Base URL used to strip common prefixes from document sources",
+    )
+    parser.add_argument(
+        "--config-module",
+        default=None,
+        help=(
+            "Python import path to a module exposing a build_config(...) function "
+            "(e.g. 'examples.california_edd.ingestion.edd_config'). Use this for datasets "
+            "that need custom prep_json_item logic."
+        ),
+    )
     parser.add_argument("--json_input", help="path to the JSON file to ingest", action="append")
     parser.add_argument(
         "--resume",
@@ -167,7 +161,7 @@ def main() -> None:
     )
     args = parser.parse_args(sys.argv[1:])
 
-    config = get_ingester_config(args.dataset)
+    config = get_ingester_config(args.dataset, args)
 
     if args.drop_only:
         with app_config.db_session() as db_session:

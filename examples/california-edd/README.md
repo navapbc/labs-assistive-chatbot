@@ -12,9 +12,9 @@ A reference implementation for building a chatbot over California's [Employment 
 
 A Scrapy spider that crawls `edd.ca.gov/en/` and extracts page content as structured JSON. Handles EDD-specific HTML patterns including accordion sections and tab panes. Scrapy discovers spiders under `scrapy_dst/spiders/` (per the `SPIDER_MODULES` setting), so the spider must be moved there before it can be run.
 
-### ingestion/ingest_runner.py
+### ingestion/edd_config.py
 
-Shows how `edd_config` configures ingestion for scraped EDD content (including EDD-specific markdown fixes applied before chunking). This repo's `app/src/ingest_runner.py` already contains this function and an `"edd"` case in `get_ingester_config()`; the file here is a reference for adapting the pattern to a different app.
+An EDD-specific ingestion config (custom `prep_json_item` plus markdown fix-ups for quirks in EDD pages). The generic `app/src/ingest_runner.py` loads this via the `--config-module` flag — no code changes to the core app are required.
 
 ### scrapy_runner.py / scrapy.cfg / scrapy_dst/
 
@@ -38,19 +38,20 @@ This produces `edd_scrapings.json` in the current directory.
 
 ### 2. Ingest the content
 
-This repo's `app/src/ingest_runner.py` already registers the `"edd"` dataset, so you can ingest the JSON directly:
+Point the generic ingest runner at the EDD config module:
 
 ```bash
 cd app
-poetry run ingest-runner edd --json_input /absolute/path/to/edd_scrapings.json
+poetry run ingest-runner edd \
+  --dataset-label="CA EDD" \
+  --benefit-program=employment \
+  --benefit-region=California \
+  --common-base-url=https://edd.ca.gov/en/ \
+  --config-module=examples.california_edd.ingestion.edd_config \
+  --json_input=/absolute/path/to/edd_scrapings.json
 ```
 
-If you are adapting this example to a different app that does not already have `edd_config`, copy the function from `ingestion/ingest_runner.py` into your app's `ingest_runner.py` and add a case to `get_ingester_config()`:
-
-```python
-case "edd":
-    return edd_config("CA EDD", "employment", "California", scraper_dataset)
-```
+If you are adapting this example to a different data source, write your own `build_config(...)` function (see `edd_config.py` for the signature) and pass it via `--config-module`. For straightforward sources, the runner's built-in defaults (maps `main_content`/`main_primary` → `markdown`) often suffice without any custom module.
 
 ### 3. Set up the engine
 

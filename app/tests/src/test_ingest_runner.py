@@ -60,7 +60,7 @@ def patch_ingest_runner(monkeypatch):
     monkeypatch.setattr(
         ingest_runner,
         "get_ingester_config",
-        lambda x: IngestConfig(
+        lambda dataset, args=None: IngestConfig(
             "Test ingest runner", "", "", "https://test.org/", "test_ingest_runner"
         ),
     )
