@@ -14,6 +14,21 @@
     },
     {
       "pattern": "caseworker.navapbc.com"
+    },
+    {
+      "pattern": "medium.com"
+    },
+    {
+      "pattern": "betterprogramming.pub"
+    },
+    {
+      "pattern": "luolingchun.github.io"
+    },
+    {
+      "pattern": "promptfoo.dev/docs/configuration/load-from-googlesheets"
+    },
+    {
+      "pattern": "^generateUniqueId.js$"
     }
   ],
   "replacementPatterns": [
