@@ -1,18 +1,42 @@
 # Nava Labs Assistive Chatbot
 
-Welcome! This is an open-source template from [Nava Labs](https://github.com/navapbc) for building an AI-powered assistive chatbot. It provides a production-ready starting point for a generative AI chatbot that uses retrieval-augmented generation (RAG) to answer questions grounded in your own documentation.
+**An open-source generative AI chatbot that uses vetted sources of truth to answer benefits program questions, backed up by direct quote citations.**
 
-Use this template to stand up a chatbot that ingests domain-specific content (policy documents, knowledge-base articles, internal documentation, etc.), indexes it for semantic search, and serves answers through a chat UI and a REST API.
+Built by [Nava Labs](https://www.navapbc.com/labs/ai-tools-public-benefits), a division of [Nava PBC](https://www.navapbc.com).
 
-## Table of contents
+**[About](#about)** · **[Features](#features)** · **[How it works](#how-it-works)** · **[Components](#components)** · **[Setup](#setup)** · **[Evaluation](#evaluation)** · **[Contributing](#contributing)** · **[License](#license)**
 
-- [How it works](#how-it-works)
-- [Project components](#project-components)
-- [Set up and run the application](#set-up-and-run-the-application)
-  - [Managing the chatbot's data](#managing-the-chatbots-data)
-- [Research and evaluation](#research-and-evaluation)
-- [Deploying the application](#deploying-the-application)
-- [Contributing](#contributing)
+---
+
+## About
+
+Navigating and enrolling in benefits programs is challenging, with complex policies and application processes. Many people need help from support professionals like caseworkers, call-center specialists, and community outreach specialists. Yet because benefits programs are so complicated, even these staff can benefit from support to help them help others navigate and enroll in government programs.
+
+The [Assistive Chatbot](https://www.navapbc.com/labs/caseworker-ai-tools/assistive-chatbot) is a  part of Nava Labs' broader [Caseworker Empowerment Toolkit](https://www.caseworker.navapbc.com).
+
+**Initial development and piloting:**
+
+The Assistive Chatbot was initially developed with funding from Gates Foundation, in partnership with [Amplifi](https://www.amplifi.org/). 125 staff members in public-facing roles across six direct service organizations tested the tool in a 3-month pilot period running March to June 2025. Our pilot evaluation showed the chatbot is estimated to improve caseworker accuracy by an average of 40% with stronger improvements for more difficult client questions. Nava Labs has published our in-depth pilot findings:
+- [Evaluating a Gen-AI powered Assistive Chatbot for Caseworkers](https://www.navapbc.com/case-studies/evaluating-ai-assistive-chatbot-caseworkers)
+
+**Who this is for:**
+
+- **Caseworkers and benefit navigators** who help clients enroll in public benefit programs
+- **Government agencies and social services organizations** developing AI tools for their workforce
+- **Developers** looking to build or adapt AI-assisted casework tools for their context
+
+---
+
+## Features
+
+- **Integrated in context** - A REST API makes the chatbot available for integration into the systems where caseworkers are already working
+- **Vetted sources of truth** — Ingests domain-specific content (policy documents, knowledge-base articles, internal documentation, web-based content, etc.) and indexes it for semantic search
+- **Direct quote citations with every answer** — Provides direct quote citations to back up LLM-generated responses
+- **Summarize and translate in a conversational interface** — Includes inherent LLM capabilties like summarization and language translation to make complext benefits information easy to understand
+- **Sticks to what it knows** - Built-in guardrails prevent the chatbot from answering out-of-scope questions that aren't covered by its designated sources
+- **Flexible AI model support** — works with multiple LLM providers
+
+---
 
 ## How it works
 
@@ -41,7 +65,7 @@ flowchart LR
     end
 ```
 
-## Project components
+## Components
 
 This template is built on Nava's open-source [infrastructure template](https://github.com/navapbc/template-infra) and [Python application template](https://github.com/navapbc/template-application-flask/), part of [Nava's Platform](https://github.com/navapbc/platform).
 
@@ -55,24 +79,40 @@ This template is built on Nava's open-source [infrastructure template](https://g
 - Evaluation code for measuring retrieval-pipeline performance is in [/app/notebooks/metrics](./app/notebooks/metrics).
 - Additional exploratory code and notebooks live in [/app/notebooks](./app/notebooks).
 
-## Set up and run the application
+## Setup
 
 To set up your local development environment, follow the instructions in [Getting Started](docs/app/getting-started.md).
+
+See [Deployments and Releases](docs/releases.md) for information about deploying to your environments.
 
 ### Managing the chatbot's data
 
 To learn more about how to configure data ingestion and refresh the indexed content, see [Data Management](docs/data-management.md).
 
-## Research and evaluation
+## Evaluations
 
 The chatbot includes built-in commands for research and evaluation, including batch processing and exporting user interaction logs. See [Special Commands](docs/special-commands.md).
 
 You can also run [promptfoo](https://www.promptfoo.dev/) evaluations against multiple test inputs using Google Sheets. See [Promptfoo Evaluations](docs/app/evaluation/promptfoo-google-sheets.md).
 
-## Deploying the application
-
-See [Deployments and Releases](docs/releases.md) for information about deploying to your environments.
-
 ## Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md) for details.
+We welcome contributions from the community — whether you're fixing a bug, suggesting a feature, or improving documentation.
+
+Please read our [Contributing Guide](CONTRIBUTING.md) before submitting a pull request. All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+For security-related issues, please review our [Security Policy](SECURITY.md) before disclosing publicly.
+
+---
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE). You are free to use, modify, and distribute this software in accordance with the license terms.
+
+---
+
+## About Nava
+
+[Nava PBC](https://www.navapbc.com) partners with government agencies to design and build simple, effective digital services. As a public benefit corporation, we're accountable to our mission: making it easier for people to access the services they need.
+
+[Nava Labs](https://www.navapbc.com/labs) uses philanthropic funding to prototype safety-net innovations that government agencies need but can’t fund directly. We build and test new approaches to delivering public services, evaluate what works, and advocate for scaling proven solutions.
