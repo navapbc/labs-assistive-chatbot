@@ -32,7 +32,7 @@ The Assistive Chatbot was initially developed with funding from Gates Foundation
 - **Integrated in context** - A REST API makes the chatbot available for integration into the systems where caseworkers are already working
 - **Vetted sources of truth** — Ingests domain-specific content (policy documents, knowledge-base articles, internal documentation, web-based content, etc.) and indexes it for semantic search
 - **Direct quote citations with every answer** — Provides direct quote citations to back up LLM-generated responses
-- **Summarize and translate in a conversational interface** — Includes inherent LLM capabilties like summarization and language translation to make complext benefits information easy to understand
+- **Summarize and translate in a conversational interface** — Includes inherent LLM capabilities like summarization and language translation to make complex benefits information easy to understand
 - **Sticks to what it knows** - Built-in guardrails prevent the chatbot from answering out-of-scope questions that aren't covered by its designated sources
 - **Flexible AI model support** — works with multiple LLM providers
 
