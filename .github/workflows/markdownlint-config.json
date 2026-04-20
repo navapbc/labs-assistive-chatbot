@@ -11,6 +11,9 @@
     },
     {
         "pattern": "https://navalabs.atlassian.net/browse/DST-"
+    },
+    {
+      "pattern": "caseworker.navapbc.com"
     }
   ],
   "replacementPatterns": [

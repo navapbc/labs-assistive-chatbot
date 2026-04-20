@@ -4,7 +4,7 @@
 
 Built by [Nava Labs](https://www.navapbc.com/labs/ai-tools-public-benefits), a division of [Nava PBC](https://www.navapbc.com).
 
-**[About](#about)** · **[Features](#features)** · **[How it works](#how-it-works)** · **[Components](#components)** · **[Setup](#setup)** · **[Evaluation](#evaluation)** · **[Contributing](#contributing)** · **[License](#license)**
+**[About](#about)** · **[Features](#features)** · **[How it works](#how-it-works)** · **[Components](#components)** · **[Setup](#setup)** · **[Evaluations](#evaluations)** · **[Contributing](#contributing)** · **[License](#license)**
 
 ---
 
