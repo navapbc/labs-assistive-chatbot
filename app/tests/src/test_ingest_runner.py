@@ -160,9 +160,7 @@ def test_build_ingester_config__with_config_module(monkeypatch):
             kwargs["dataset_label"], "", "", kwargs["common_base_url"], kwargs["dataset"]
         )
 
-    monkeypatch.setattr(
-        ingest_runner, "_load_config_builder", lambda spec: fake_builder
-    )
+    monkeypatch.setattr(ingest_runner, "_load_config_builder", lambda spec: fake_builder)
     config = build_ingester_config(
         "my_dataset",
         dataset_label="My Label",
