@@ -8,7 +8,9 @@ The CI/CD for this project uses [reusable Github Actions workflows](https://docs
 > schedule) are disabled by renaming them to `*.yml.disabled`:
 > `cd-app`, `ci-app-infra-service`, `ci-app-pr-environment-checks`,
 > `ci-app-pr-environment-destroy`, `check-infra-deploy-status`, and
-> `scan-orphaned-pr-environments`. To re-enable one, drop the `.disabled` suffix.
+> `scan-orphaned-pr-environments`. The `promptfoo-googlesheet-evaluation` prompt
+> evaluation workflow is also disabled for now. To re-enable one, drop the
+> `.disabled` suffix.
 
 ## 🧪 CI
 
