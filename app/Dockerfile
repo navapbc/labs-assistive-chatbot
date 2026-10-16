@@ -10,7 +10,13 @@ FROM python:3.12-slim AS base
 # https://python-poetry.org
 RUN pip install --no-cache-dir poetry==1.5
 
-RUN apt-get update && apt-get install -y lsb-release wget gnupg && \
+# Fail the RUN if any command in a pipe fails (e.g. the wget | gpg below)
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Pinning apt package versions breaks the build whenever Debian drops old versions;
+# we rely on `apt-get upgrade` and the weekly vulnerability scans instead.
+# hadolint ignore=DL3008
+RUN apt-get update && apt-get install --no-install-recommends -y lsb-release wget gnupg ca-certificates && \
     # Need to add the official PostgreSQL repo to install v16 -- https://askubuntu.com/a/1442247
     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/postgresql-archive-keyring.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/postgres.list && \
