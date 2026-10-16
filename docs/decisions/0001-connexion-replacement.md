@@ -17,7 +17,7 @@ We aren't looking to move off of Flask at the moment as we feel that would be a 
 * Connexion requires you to specify an OpenAPI spec, but passes the request objects as an the raw JSON. We currently use Pydantic to convert this into a python object for additional validations & for ease-of-use, but this effectively means we need to define any models twice.
 * Defining the OpenAPI specs first instead of defining the data models in code has often been more frustrating. While one goal of doing it this way was the ability to create mock-endpoints while development is ongoing, this can also be easily handled by just making the endpoint return a static response in-code.
 * Connexion's defaults for validation leave a lot to be desired. While we currently override these, it adds a lot of boilerplate to this template library, and isn't immediately obvious.
-* Code first is recommended by Swagger when building internal APIs that need to be built quickly: https://swagger.io/blog/api-design/design-first-or-code-first-api-development/ which is often the case for our endpoints that aren't directly exposed to users.
+* Code first is recommended by Swagger when building internal APIs that need to be built quickly: https://web.archive.org/web/20200518173348/https://swagger.io/blog/api-design/design-first-or-code-first-api-development/ (archived; the original page was removed) which is often the case for our endpoints that aren't directly exposed to users.
 
 ## Considered Options
 

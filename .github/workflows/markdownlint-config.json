@@ -29,6 +29,9 @@
     },
     {
       "pattern": "^generateUniqueId.js$"
+    },
+    {
+      "pattern": "doi.org/10.1109/TSE.1986.6312940"
     }
   ],
   "replacementPatterns": [
