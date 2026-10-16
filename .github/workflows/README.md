@@ -2,6 +2,14 @@
 
 The CI/CD for this project uses [reusable Github Actions workflows](https://docs.github.com/en/actions/using-workflows/reusing-workflows).
 
+> [!NOTE]
+> This repo is published as open source and is not deployed to AWS. Workflows that
+> deploy or otherwise run against AWS automatically (on push, pull request, or
+> schedule) are disabled by renaming them to `*.yml.disabled`:
+> `cd-app`, `ci-app-infra-service`, `ci-app-pr-environment-checks`,
+> `ci-app-pr-environment-destroy`, `check-infra-deploy-status`, and
+> `scan-orphaned-pr-environments`. To re-enable one, drop the `.disabled` suffix.
+
 ## 🧪 CI
 
 ### Per app workflows
