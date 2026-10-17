@@ -2,7 +2,7 @@ import chainlit as cl
 from src.app_config import app_config
 
 
-def login_callback(username: str, password: str) -> cl.User | None:
+async def login_callback(username: str, password: str) -> cl.User | None:
     if password == app_config.global_password:
         return cl.User(identifier=username)
     else:

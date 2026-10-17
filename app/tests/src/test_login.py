@@ -1,3 +1,5 @@
+import pytest
+
 import chainlit.config
 from src.app_config import app_config
 from src.login import login_callback, require_login
@@ -17,8 +19,10 @@ def test_require_login_with_password(monkeypatch):
     assert chainlit.config.config.code.password_auth_callback
 
 
-def test_login_callback(monkeypatch):
+@pytest.mark.asyncio
+async def test_login_callback(monkeypatch):
     app_config.global_password = "correct pass"
 
-    assert login_callback("some user", "wrong pass") is None
-    assert login_callback("some user", "correct pass").identifier == "some user"
+    assert await login_callback("some user", "wrong pass") is None
+    user = await login_callback("some user", "correct pass")
+    assert user.identifier == "some user"

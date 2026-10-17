@@ -163,6 +163,13 @@ class ChainlitPolyDataLayer(BaseDataLayer):
         # Return the first non-empty result, or empty string if none
         return next((res for res in results if res), "")
 
+    async def get_favorite_steps(self, user_id: str) -> List[StepDict]:
+        results = await self._call_method(lambda dl: dl.get_favorite_steps(user_id))
+        return results[0]
+
+    async def close(self) -> None:
+        await self._call_method(lambda dl: dl.close())
+
 
 class PostgresDataLayer(ChainlitDataLayer):
     def __init__(

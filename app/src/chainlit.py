@@ -25,7 +25,7 @@ def get_data_layer() -> ChainlitPolyDataLayer:
 
 
 @cl.set_chat_profiles
-async def chat_profiles() -> list[cl.ChatProfile]:
+async def chat_profiles(_user: cl.User | None) -> list[cl.ChatProfile]:
     return [
         cl.ChatProfile(
             name="chainlit",
