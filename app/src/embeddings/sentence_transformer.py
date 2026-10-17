@@ -52,4 +52,4 @@ class SentenceTransformerEmbedding(EmbeddingModel):
             A single embedding vector (if texts is a string) or
             a list of embedding vectors (if texts is a sequence of strings)
         """
-        return self._model.encode(texts, show_progress_bar=show_progress_bar)  # type: ignore
+        return self._model.encode(texts, show_progress_bar=show_progress_bar)

@@ -2,6 +2,7 @@ import json
 import logging
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.healthcheck import healthcheck_router
@@ -9,7 +10,11 @@ from src.healthcheck import healthcheck_router
 
 @pytest.fixture(name="test_client")
 def fixture_test_client():
-    return TestClient(healthcheck_router)
+    # Routes need FastAPI's middleware (e.g. fastapi_middleware_astack), so serve
+    # the router from a FastAPI app rather than using it as the ASGI app directly
+    app = FastAPI()
+    app.include_router(healthcheck_router)
+    return TestClient(app)
 
 
 class TestAPI:
