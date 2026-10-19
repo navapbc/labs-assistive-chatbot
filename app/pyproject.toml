@@ -32,7 +32,7 @@ sse-starlette = "^2.2.1"
 
 nltk = "^3.10.3"
 scrapy = "^2.11.2"
-markdownify = "^0.13.1"
+markdownify = "^0.14.1"
 markdown = "^3.7"
 langchain-text-splitters = "^1.1.2"
 mistletoe = "^1.4.0"
