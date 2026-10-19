@@ -1,7 +1,7 @@
 # Checkpoints Dockle should skip. Read from the working directory by Dockle.
 # https://github.com/goodwithtech/dockle#ignore-the-specified-checkpoints
 
-# Clear apt-get caches: flagged on the python:3.12-slim base image layer, which
+# Clear apt-get caches: flagged on the python:3.13-slim base image layer, which
 # cleans up with Debian 13's `apt-get dist-clean`, a command Dockle doesn't
 # recognize. Our own apt layer in app/Dockerfile removes /var/lib/apt/lists.
 DKL-DI-0005
