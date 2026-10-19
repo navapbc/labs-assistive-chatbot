@@ -1,0 +1,26 @@
+# Keep local-only and generated files out of the Docker build context.
+# In development, docker-compose mounts ./app over /app, so these are still
+# available inside the dev container.
+
+# Local secrets; deployed environments get config from environment variables
+.env
+
+# Virtualenvs and caches
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.mypy_cache
+.coverage
+coverage_report.xml
+htmlcov
+
+# Local embedding model cache (EMBEDDING_MODEL_NAME=/app/models/... in local.env), several GB
+models
+
+# Evaluation output written by tests and local runs
+src/evaluation/data/qa_pairs
+
+# Exploration notebooks and JS tooling for promptfoo
+notebooks
+node_modules
